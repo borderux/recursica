@@ -11,7 +11,7 @@ If you are an AI agent building components:
 
 # Component Development Guide (Canonical)
 
-This is the **canonical, shared** rulebook for building any Recursica adapter component, regardless of which UI library it wraps (Mantine, MUI, or a future adapter). Use it when creating a new component or reviewing an existing wrapper in **any** adapter.
+This is the **canonical, shared** rulebook for building any Recursica adapter component, regardless of which UI library it wraps (including future adapters). Use it when creating a new component or reviewing an existing wrapper in **any** adapter.
 
 > Each adapter has its own `docs/COMPONENT_DEV_GUIDE.md` that links back here and adds only the concrete delta for that library (e.g. how polymorphism is implemented, or a CSS-specificity note tied to that library's styling engine). Read this document first, then your adapter's delta. See [PIPELINE.md](./PIPELINE.md) for the full adapter-common → adapter → storybook-template → recursica-storybook flow, and [`CONTRIBUTING.md`](../CONTRIBUTING.md) in this package for how to keep this canonical doc and each adapter's delta in sync.
 >
@@ -62,7 +62,7 @@ Do not use plain `.css` for component overrides, and do not use `.css.ts` with `
 
 ### 3.1 Recursica prop layer (unified API)
 
-- **Start with Recursica props** – The Recursica props interface is the **generic prop layer** that applies to all UI-kit adapters (Mantine, Material, Carbon, native HTML, etc.). Define it first; it is the design-system API only (e.g. `variant`, `size`, `elevation`, `icon`). **Do not add `layer` as a prop;** layer is set only by wrapping in `<Layer>`.
+- **Start with Recursica props** – The Recursica props interface is the **generic prop layer** that applies to all UI-kit adapters (any component library, native HTML, etc.). Define it first; it is the design-system API only (e.g. `variant`, `size`, `elevation`, `icon`). **Do not add `layer` as a prop;** layer is set only by wrapping in `<Layer>`.
 - **Always Document Props with JSDoc** – Every exported Prop interface (especially Recursica-specific props) MUST be fully documented using JSDoc (`/** ... */`) on every field. This ensures developers have exact Intellisense definitions locally and guarantees that autocompletion reliably maps our structural definitions without requiring them to parse the component natively.
 - **Global `overStyled` prop** – Every Recursica component **must** accept an `overStyled` boolean prop (defaulting to `false`) and wrap their component properties in the `RecursicaOverStyled<T>` typescript union. This strict compile-time check prevents developers from accidentally autocompleting forbidden internal styling injections. At runtime, components also pipe their properties through `filterStylingProps` to omit injection attempts if a developer forces an override through JavaScript directly. The presence of `overStyled={true}` serves as an explicit bypass for both TypeScript and the runtime filter.
 - **Goal: one API, any kit** – The goal is a **unified prop layer** for Recursica components that works with any underlying UI-kit or HTML element. Each adapter is responsible for **mapping** Recursica props to the underlying kit's API. Creating a component therefore requires **understanding each target kit's prop API** so you can define a single Recursica API that maps cleanly in every adapter.
@@ -82,7 +82,7 @@ Do not use plain `.css` for component overrides, and do not use `.css.ts` with `
 const UNSUPPORTED_PROPS = [
   "size", // Recursica controls sizing via the `size` variant + design tokens, not raw dimensions.
   "color", // Colors are token-driven; the library's native palette isn't exposed.
-] as const satisfies readonly (keyof MantineButtonProps)[];
+] as const satisfies readonly (keyof UnderlyingButtonProps)[];
 
 const sanitizedProps = omitUnsupportedProps(
   filterStylingProps(rest, overStyled),
@@ -133,7 +133,7 @@ All four helpers live in `@recursica/adapter-common`, re-exported from each adap
 
 Why `mergeClassNames`/`mergeStyles` and not a bare override for slot props: the underlying library's `classNames`/`styles` slots are singular values per slot (a string, or a `CSSProperties` object) — if a caller-supplied slot value fully replaced ours via `withCallerOverride`, the component's own module styling for that slot would vanish, not just extend. These helpers merge per slot instead (string concat for `classNames`, object merge for `styles`) so the caller's value layers on top without dropping ours, across the union of slots either side names — a slot the caller targets that Recursica has no default for still passes through.
 
-This isn't theoretical: a real mui-adapter Radio regression shipped from a spread-order mistake — `classes` was computed correctly but placed _before_ the spread, so it was always a no-op, and the radio circle never rendered. Mantine Switch's `thumbIcon` and Pagination's arrow icons had the opposite bug: placed after the spread with no helper, so a caller-passed value could silently clobber ours when the intent was actually "ours must always win." Naming the mechanism instead of relying on ordering is what prevents both.
+This isn't theoretical: a real adapter Radio regression shipped from a spread-order mistake — `classes` was computed correctly but placed _before_ the spread, so it was always a no-op, and the radio circle never rendered. Another adapter's Switch `thumbIcon` and Pagination arrow icons had the opposite bug: placed after the spread with no helper, so a caller-passed value could silently clobber ours when the intent was actually "ours must always win." Naming the mechanism instead of relying on ordering is what prevents both.
 
 Two acceptable ways to make a specific prop fully un-settable by a caller (stronger than any of the above — use for props that must never be settable at all, like an internally-computed `expanded`/`onChange` on a controlled item):
 
@@ -147,7 +147,7 @@ Two acceptable ways to make a specific prop fully un-settable by a caller (stron
 - **Mapping** – In each library implementation, destructure Recursica props, apply defaults, then compute library props (e.g. mapped variant, mapped size) using mapping constants when the APIs differ, e.g. `MAP_VARIANT = { solid: 'filled', outline: 'outline', text: 'subtle' }`. Render the library component with these mapped props plus `...rest`.
 - **No design tokens via props** – Do not accept props that override design tokens (e.g. `backgroundColor`, `sizePx`, `height`, `minWidth`, `maxWidth`). Look is controlled by variant/size and by tokens in the CSS module. The Forge UI shows **design token properties** (e.g. height, min-width, max-width) from the component's token structure (e.g. UIKit.json); those are edited in the toolbar and applied as CSS variable values. They are not part of the Recursica component props API — the component only exposes a small set of props (variant, size, elevation, icon, etc.); layer is not a prop — wrap in `<Layer>` to set layer. Dimensions and other token-driven values come from the CSS module that references those variables.
 - **Caller `className` / `style`** – You may allow optional `className` and `style` to be passed through to the library root so callers can add overrides. Document that Recursica styling comes from the module and caller values are additive.
-- **Multi-library** – If the adapter supports multiple libraries, use library-specific prop bags (e.g. `mantine?: { ... }`) so callers can pass library-specific options. The implementation for each library reads its bag and merges into the props passed to that library.
+- **Multi-library** – If the adapter supports multiple libraries, use library-specific prop bags (e.g. `<library>?: { ... }`) so callers can pass library-specific options. The implementation for each library reads its bag and merges into the props passed to that library.
 
 ---
 
@@ -233,7 +233,7 @@ Two acceptable ways to make a specific prop fully un-settable by a caller (stron
 
 ## 11. Form Controls & Wrappers
 
-When building input primitives (e.g., Text Fields, Selects, Checkboxes), UI libraries universally try to inject their own highly-opinionated macro wrappers (such as `Input.Wrapper` in Mantine or `FormControl` in MUI) to manage labels, error strings, and layout.
+When building input primitives (e.g., Text Fields, Selects, Checkboxes), UI libraries universally try to inject their own highly-opinionated macro wrappers (such as a kit's own input-wrapper or form-control component) to manage labels, error strings, and layout.
 
 **Rule: Never use the underlying UI-kit's macro form wrapper.**
 

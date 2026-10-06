@@ -46,7 +46,7 @@ interface MantineHarnessSourceOfTruthFileConfig {
   /** See `MantineSourceOfTruthTokensSource`. Defaults to `"target"` — the
    * harness renders Mantine's components with *this* project's own
    * committed Recursica tokens, not Mantine's own bundled snapshot or (the
-   * one thing neither ever means) the deprecated `@recursica/official-release`
+   * one thing neither ever means) the retired `@recursica/official-release`
    * package. Set to `"mantine-package"` to test against
    * `@recursica/adapter-mantine-v8`'s own bundled tokens instead. */
   tokensSource?: MantineSourceOfTruthTokensSource;

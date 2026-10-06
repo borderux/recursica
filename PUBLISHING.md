@@ -173,7 +173,7 @@ node scripts/test-release-workflow.mjs --upload
     "version": "1.2.3"
   },
   {
-    "name": "@recursica/ui-kit-mantine",
+    "name": "@recursica/adapter-common",
     "version": "2.1.0"
   }
 ]

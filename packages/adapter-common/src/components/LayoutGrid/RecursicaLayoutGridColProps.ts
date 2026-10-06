@@ -7,17 +7,17 @@ import React from "react";
  * commented out, and NOT part of this contract yet (2026-09-22, Matt — paused to get the Grid
  * work merged rather than resolve every open question first). Come back to this:
  *
- * - `span`/`order`: both mantine-v8 and mui-v7 independently built matching versions of these
+ * - `span`/`order`: multiple adapters independently built matching versions of these
  *   with no shared contract driving either — a signal they're genuinely common, worth
- *   formalizing. `span` also resolves a naming mismatch: Mantine calls the column-width prop
- *   `span`, mui-v7 calls it `size` — Matt chose Mantine's naming as the eventual Recursica name.
- * - `visibleFrom`/`hiddenFrom`: same signal (both adapters independently built matching
- *   versions), but their breakpoint values (`xs`/`sm`/`md`/`lg`/`xl` below) are Mantine's own
- *   naming convention, not a Recursica one — Recursica doesn't have its own breakpoint naming yet.
- *   Don't just copy Mantine's keys back in; wait for the real convention. Note `span`/`order`'s
+ *   formalizing. `span` also resolves a naming mismatch between kits (`span` vs `size`) —
+ *   Matt chose `span` as the eventual Recursica name.
+ * - `visibleFrom`/`hiddenFrom`: same signal (adapters independently built matching
+ *   versions), but their breakpoint values (`xs`/`sm`/`md`/`lg`/`xl` below) are an underlying
+ *   kit's naming convention, not a Recursica one — Recursica doesn't have its own breakpoint naming yet.
+ *   Don't just copy a kit's keys back in; wait for the real convention. Note `span`/`order`'s
  *   own per-breakpoint map variants below have the same `xs`/`sm`/`md`/`lg`/`xl` gap — resolve
  *   together with `visibleFrom`/`hiddenFrom` when that convention lands.
- * - `offset`: never added — still undiffed between the two adapters.
+ * - `offset`: never added — still undiffed across adapters.
  */
 // export type RecursicaLayoutGridColSpan =
 //   | number

@@ -4,7 +4,7 @@ This package provides shared, framework-agnostic React components and structural
 
 ## Purpose
 
-`adapter-common` is the foundation layer for all adapter packages. It contains primitives that are not tied to any specific UI framework (Mantine, MUI, etc.). Other adapters depend on this package and extend its primitives with framework-specific behavior.
+`adapter-common` is the foundation layer for all adapter packages. It contains primitives that are not tied to any specific UI framework (no specific UI kit). Other adapters depend on this package and extend its primitives with framework-specific behavior.
 
 ## Key Exports
 
@@ -14,11 +14,12 @@ import { Layer, RecursicaThemeProvider } from "@recursica/adapter-common";
 
 ## Consumers
 
-- `@recursica/adapter-mantine-v8` and `@recursica/adapter-mui-v7` — separate, independently-versioned repos, not packages in this monorepo
+- Recursica UI-kit adapters — separate, independently-versioned repos, not packages in this monorepo
 - `@recursica/storybook-template`
 
 ## Guidelines
 
-- Components in this package must remain framework-agnostic — do not import from Mantine, MUI, or any other UI framework.
+- Components in this package must remain framework-agnostic — do not import from any UI framework or UI kit.
+- **Never name specific adapters or UI kits in documentation or comments.** Keep all docs, READMEs, `llms.txt`, and code comments in this package generic ("every adapter", "the underlying UI kit", "the source-of-truth adapter"). Specific adapter names and repo links belong in the adapters' own repos or in the root monorepo docs, not here. The exception is `CHANGELOG.md`, which is historical and generated.
 - All exports should be generic primitives that any adapter can build on.
 - See `CONTRIBUTING.md` for contribution rules.

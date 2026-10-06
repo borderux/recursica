@@ -1,9 +1,8 @@
 import React from "react";
 
 /**
- * A single item in Autocomplete/Dropdown's `data`. Shared between both components — and both
- * adapters, via this package — since their item vocabulary is identical (see
- * MANTINE_ADAPTER_RICH_OPTION_DATA.md at the repo root).
+ * A single item in Autocomplete/Dropdown's `data`. Shared between both components — and every
+ * adapter, via this package — since their item vocabulary is identical.
  */
 export interface RecursicaComboboxItem {
   value: string;

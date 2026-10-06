@@ -21,6 +21,6 @@ export interface RecursicaRadioGroupProps {
   /** Initial selected value in uncontrolled mode */
   defaultValue?: unknown;
   // `onChange` is intentionally not declared here. Each adapter picks it up straight from its
-  // own underlying kit (Mantine's RadioGroup vs MUI's RadioGroup), signature and all, so a
-  // Recursica component drops in over an existing implementation with no caller changes.
+  // own underlying kit, signature and all, so a Recursica component drops in over an existing
+  // implementation with no caller changes.
 }

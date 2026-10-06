@@ -25,7 +25,7 @@ import {
 
 ## Consumers
 
-- `@recursica/adapter-mantine-v8` and `@recursica/adapter-mui-v7` — separate, independently-versioned repos, not packages in this monorepo
+- [`@recursica/adapter-mantine-v8`](https://github.com/borderux/recursica-adapter-mantine-v8) and [`@recursica/adapter-mui-v7`](https://github.com/borderux/recursica-adapter-mui-v7) — separate, independently-versioned repos, not packages in this monorepo
 - `packages/adapter-tester` — visual-regression harness (installs both adapters as npm dependencies)
 
 ## Guidelines

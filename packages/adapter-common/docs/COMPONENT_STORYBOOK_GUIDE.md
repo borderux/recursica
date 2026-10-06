@@ -3,7 +3,7 @@ STOP AND READ THIS FIRST.
 If you are an AI agent writing stories:
 
 1. You MUST use Component Story Format 3 (CSF3). Do not use the older `storiesOf` API or CSF2 syntax.
-2. You must NEVER import raw UI-library components (e.g. `@mantine/core`, `@mui/material`) into Storybook. Everything rendered must be Recursica components.
+2. You must NEVER import raw UI-library components (e.g. the UI kit's own package) into Storybook. Everything rendered must be Recursica components.
 3. Do NOT manually wrap stories in `<Layer>`. The global Storybook decorator already wraps every story in a `<Layer layer={0}>` with `layer`/`withLayer` Story Controls (see §9). Only add an explicit `<Layer layer={N}>` inside a story when demonstrating the component on a specific non-default/nested layer — never as the default pattern.
    </critical_agent_directive>
 
@@ -11,7 +11,7 @@ If you are an AI agent writing stories:
 
 This is the **canonical, shared** guide for writing Storybook stories for Recursica components, regardless of which adapter you're working in. Use it when adding or updating stories for any Recursica component (e.g. Button, future inputs, cards).
 
-> Each adapter has its own `docs/COMPONENT_STORYBOOK_GUIDE.md` that links back here and adds only what's different for that library (e.g. MUI's requirement to explicitly filter leaked system props out of Storybook Controls). Read this document first, then your adapter's delta. See [COMPONENT_DEV_GUIDE.md](./COMPONENT_DEV_GUIDE.md) for the component implementation this guide assumes, and [PIPELINE.md](./PIPELINE.md) for how stories flow into `storybook-template` and `recursica-storybook`.
+> Each adapter has its own `docs/COMPONENT_STORYBOOK_GUIDE.md` that links back here and adds only what's different for that library (e.g. a kit that requires explicitly filtering leaked system props out of Storybook Controls). Read this document first, then your adapter's delta. See [COMPONENT_DEV_GUIDE.md](./COMPONENT_DEV_GUIDE.md) for the component implementation this guide assumes, and [PIPELINE.md](./PIPELINE.md) for how stories flow into `storybook-template` and `recursica-storybook`.
 
 ---
 
@@ -107,7 +107,7 @@ This keeps the story count manageable and makes it clear why each static story e
 
 ## 8. Strictly Recursica Components in Stories
 
-**Do not import native UI-library components (e.g., `@mantine/core`, `@mui/material`) directly into `.stories.tsx` files.**
+**Do not import native UI-library components (e.g., the UI kit's own package) directly into `.stories.tsx` files.**
 
 - **Why?** It defeats the purpose of the abstraction layer. If a Storybook user relies on the native library for padding, margins, formatting, or buttons during development playground usage, they are missing the raw limitations of the styling boundaries we impose natively.
 - **Layouts:** Do not use HTML primitive components like `<div style={{...}}>` or `<span>` with inline styles to manually construct layouts. Always strive to use appropriate Recursica library components, particularly layout components like `Stack`, `Group`, `Flex`, and `Box`.

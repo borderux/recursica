@@ -23,7 +23,7 @@ Versioning and releases are managed by the awesome Changesets package. For more 
 - Package will be published to npm registry
 - Available for installation via `npm install @recursica/package-name`
 
-**Examples**: `@recursica/ui-kit-mantine`, `@recursica/schemas`, `@recursica/common`
+**Examples**: `@recursica/adapter-common`, `@recursica/schemas`, `@recursica/common`
 
 ### 2. GitHub Release Assets
 

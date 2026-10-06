@@ -2,7 +2,7 @@
 
 > Shared agnostic design-system component primitives for Recursica UI integrations.
 
-Provides the base primitives, utilities, and hooks that specific framework adapters (like the Mantine adapter) build upon.
+Provides the base primitives, utilities, and hooks that specific framework adapters build upon.
 
 ## Documentation
 
