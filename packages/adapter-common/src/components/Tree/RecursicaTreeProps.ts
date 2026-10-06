@@ -2,8 +2,8 @@ import React from "react";
 
 /**
  * A single node in a Recursica Tree's `data` array. Structurally compatible
- * with the underlying libraries' own node shapes (e.g. Mantine's
- * `TreeNodeData`), so adapters can pass it straight through without mapping.
+ * with the underlying libraries' own node shapes (e.g. a
+ * kit's own tree node type), so adapters can pass it straight through without mapping.
  */
 export interface RecursicaTreeNode {
   /** Unique identifier for this node, used for selection/expansion state */

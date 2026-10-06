@@ -3,7 +3,7 @@ import React from "react";
 /**
  * mergeStyles
  *
- * Per-slot merge for a `styles` prop (e.g. Mantine's StylesApi) against Recursica's own default
+ * Per-slot merge for a `styles` prop (e.g. a UI kit's slot-styles API) against Recursica's own default
  * inline styles for that slot. Mirrors `mergeClassNames`'s shape but the merge is a plain object
  * merge instead of a string concat, since each slot's value is a `CSSProperties` object, not a
  * class list: the caller's individual style properties override ours property-by-property

@@ -21,6 +21,6 @@ export interface RecursicaDropdownProps {
    * Defaults to `false` (single-line, truncated). */
   wrapItemText?: boolean;
   // `onChange` is intentionally not declared here. Each adapter picks it up straight from its
-  // own underlying kit (Mantine's Select vs MUI's Select), signature and all, so a Recursica
-  // component drops in over an existing implementation with no caller changes.
+  // own underlying kit, signature and all, so a Recursica component drops in over an existing
+  // implementation with no caller changes.
 }

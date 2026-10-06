@@ -19,7 +19,7 @@
  *   type, which typically has these props `Omit<>`'d out of it already — the whole point of
  *   `UNSUPPORTED_PROPS` is to still catch them at runtime. Type `UNSUPPORTED_PROPS` itself
  *   against the underlying library's full props type instead, e.g.
- *   `as const satisfies readonly (keyof MantineButtonProps)[]`.
+ *   `as const satisfies readonly (keyof UnderlyingButtonProps)[]`.
  * @returns `props` with every key in `unsupportedProps` removed
  */
 export function omitUnsupportedProps<T extends Record<string, unknown>>(

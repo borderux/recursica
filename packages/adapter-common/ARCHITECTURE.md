@@ -10,4 +10,4 @@ This document describes the high-level architecture of the `@recursica/adapter-c
 
 ## Key Design Decisions
 
-- Contains framework-agnostic logic and hooks to prevent duplication across specific adapters (Mantine, MUI, etc).
+- Contains framework-agnostic logic and hooks to prevent duplication across specific adapters.
