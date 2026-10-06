@@ -1,6 +1,6 @@
 {
   "name": "@recursica/adapter-tester",
-  "description": "Visual regression tester between Recursica adapters — usable inside the Recursica monorepo, or installed standalone as a devDependency in any adapter repo to diff its Storybook against Mantine as the source of truth.",
+  "description": "Visual regression tester between Recursica adapters installed as a devDependency in any adapter repo to diff its Storybook against Mantine as the source of truth.",
   "private": false,
   "homepage": "https://github.com/borderux/recursica/tree/main/packages/adapter-tester",
   "author": "hi@borderux.com",
