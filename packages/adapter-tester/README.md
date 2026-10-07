@@ -32,6 +32,12 @@ Installing `@recursica/adapter-tester` as a devDependency (see [below](#using-th
 }
 ```
 
+**Dev Mode diff:** the right pane's tabs switch between Mantine's live Storybook (**Live**), its stored golden image (**Golden**) and **Compute Diff**, which captures this project's story headlessly at its configured viewport and diffs it against that golden — the same comparison `--divergence-only` makes — showing the overlay with a green (under) or red (over) pixel count. Next to the button, edit the story's threshold and press **Save** to write it to `stories.<id>.sourceOfTruthThreshold` in `adapter-tester.config.json` (which reformats that file as plain JSON); press Compute Diff again to recompute against the edited value. Resolving the golden needs network access unless `sourceOfTruth.type` is `"url"`; if it fails, Dev Mode still starts with a warning and only Golden and Compute Diff are disabled.
+
+Working on adapter-tester itself: `npm run dev` builds the package, then runs Dev Mode (opening the browser) from an adapter checkout — `ADAPTER_DIR` if set, else the sibling `recursica-adapter-mui-v7`. Extra args are forwarded, e.g. `npm run dev -- --port 6020`. Rerun it to pick up source changes.
+
+Dev Mode listens on port 6010 by default (stepping to the next free port if it is taken); pass `--port <n>` (e.g. `npm run adapter-tester -- --port 6020`) to run a second instance alongside it.
+
 - `npm run adapter-tester` — Interactive Dev Mode: boots both Storybooks (reusing them if already running) and opens the synced side-by-side comparison browser.
 - `npm run adapter-tester:automated` — the headless own-drift check against this project's own committed goldens; see [Automated Visual Tests](#automated-visual-tests) below. This is the one to run normally — fast, no network calls.
 - `npm run adapter-tester:source-of-truth` — the separate, opt-in divergence check: this project's **live** Storybook render against the source-of-truth adapter's published goldens. Not wired up for `@recursica/adapter-mantine-v8` itself — it _is_ the source of truth, so it has nothing to diverge from.

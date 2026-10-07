@@ -4,7 +4,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import type { AdapterTesterConfig } from "./config.js";
 import { startDevServer } from "./devServer.js";
-import { resolveConfig } from "./fileConfig.js";
+import { CONFIG_FILE_NAME, resolveConfig } from "./fileConfig.js";
 import type { HarnessWebServerConfig } from "./harness/mantineSourceOfTruth.js";
 import { launchAndDetectStorybook, toLaunchTarget } from "./portDiscovery.js";
 
@@ -31,6 +31,19 @@ if (sourceOfTruthVersionFlagIndex !== -1) {
   }
   sourceOfTruthVersion = value;
   args.splice(sourceOfTruthVersionFlagIndex, 2);
+}
+
+// `--port <n>` sets the Dev Mode proxy port (default 6010) — pulled out the
+// same way, since it's consumed here rather than forwarded to Playwright.
+let devPort: number | undefined;
+const portFlagIndex = args.indexOf("--port");
+if (portFlagIndex !== -1) {
+  const value = args[portFlagIndex + 1];
+  devPort = Number(value);
+  if (value === undefined || !Number.isInteger(devPort) || devPort <= 0) {
+    throw new Error("--port requires a port number, e.g. --port 6020");
+  }
+  args.splice(portFlagIndex, 2);
 }
 
 // `--story <story-id>` scopes a run to exactly one story — pulled out the
@@ -110,7 +123,10 @@ async function main(): Promise<void> {
     }
     // Dual-Storybook interactive Dev Mode — no Playwright, no screenshots.
     // Used by the `adapter-tester` npm script.
-    await startDevServer(engineConfig, webServers);
+    await startDevServer(engineConfig, webServers, {
+      port: devPort,
+      configPath: join(cwd, CONFIG_FILE_NAME),
+    });
   } else {
     // The golden-image checks never need the source-of-truth adapter's own
     // Storybook running — the divergence check reads its stored golden files,

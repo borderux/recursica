@@ -20,7 +20,10 @@
       position: relative;
     }
     .header {
-      padding: 10px 15px;
+      height: 42px;
+      box-sizing: border-box;
+      flex: 0 0 42px;
+      padding: 0 15px;
       background-color: #252526;
       border-bottom: 1px solid #333;
       font-size: 13px;
@@ -41,6 +44,81 @@
     .status.connected {
       color: #4CAF50;
     }
+    .diff-tools {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      text-transform: none;
+      letter-spacing: normal;
+      font-weight: normal;
+      font-size: 12px;
+    }
+    .diff-badge {
+      padding: 2px 8px;
+      border-radius: 10px;
+      background: #444;
+      color: #fff;
+      font-weight: 600;
+    }
+    .diff-badge.under { background: #2e7d32; }
+    .diff-badge.over { background: #c62828; }
+    .diff-tools input {
+      width: 70px;
+      background: #1e1e1e;
+      color: #fff;
+      border: 1px solid #555;
+      border-radius: 3px;
+      padding: 2px 4px;
+    }
+    .diff-tools button, .golden-tabs > button {
+      background: #3a3d41;
+      color: #fff;
+      border: 1px solid #555;
+      border-radius: 3px;
+      padding: 2px 8px;
+      cursor: pointer;
+    }
+    .diff-tools button:disabled { opacity: 0.5; cursor: default; }
+    .golden-tabs button.active { background: #007acc; border-color: #007acc; }
+    .golden-tabs { align-items: center; }
+    #goldenView {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      min-height: 0;
+      background: #fff;
+    }
+    .golden-tabs {
+      display: flex;
+      gap: 6px;
+      margin-left: auto;
+      margin-right: 12px;
+      text-transform: none;
+      letter-spacing: normal;
+      font-weight: normal;
+      font-size: 12px;
+    }
+    #goldenImgWrap {
+      flex: 1;
+      overflow: auto;
+      background: #e6e6e6;
+    }
+    #goldenImgWrap { position: relative; }
+    #goldenImg { display: block; max-width: none; }
+    #goldenSpinner {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 36px;
+      height: 36px;
+      margin: -18px 0 0 -18px;
+      border: 4px solid #bbb;
+      border-top-color: #007acc;
+      border-radius: 50%;
+      animation: golden-spin 0.8s linear infinite;
+    }
+    @keyframes golden-spin { to { transform: rotate(360deg); } }
     iframe {
       flex: 1;
       border: none;
@@ -178,12 +256,25 @@
     <div class="right-top" id="rightTop">
       <div class="header">
         <span id="sourceOfTruthLabel">Source of Truth</span>
+        <span class="golden-tabs" id="goldenTabs">
+          <button data-view="live" class="active">Live</button>
+          <button data-view="golden">Golden</button>
+          <button data-view="diff" id="computeDiffBtn">Compute Diff</button>
+          <span class="diff-tools" id="diffResult">
+            <input type="number" min="0" step="1" id="thresholdInput" title="Threshold (pixels)">
+            <button id="saveThresholdBtn" disabled>Save</button>
+            <span class="diff-badge" id="diffBadge"></span>
+          </span>
+        </span>
         <span class="status connected" id="sourceOfTruthStatus">Ready</span>
       </div>
       <!-- Spacer to align the view with the own Storybook's header (40px) -->
-      <div style="height: 40px; flex: 0 0 40px; background-color: #fff; border-bottom: 1px solid #e6e6e6; box-sizing: border-box;"></div>
+      <div id="sotSpacer" style="height: 40px; flex: 0 0 40px; background-color: #fff; border-bottom: 1px solid #e6e6e6; box-sizing: border-box;"></div>
       <!-- Load the bare source-of-truth component preview -->
       <iframe id="sourceOfTruth" src=""></iframe>
+      <div id="goldenView">
+        <div id="goldenImgWrap"><img id="goldenImg" alt=""><div id="goldenSpinner"></div></div>
+      </div>
     </div>
     
     <div class="h-divider" id="hDivider"></div>
@@ -216,7 +307,7 @@
     // Injected by the dev server — see src/devServer.ts.
     const devConfig = window.__ADAPTER_TESTER__ || { ownName: 'Target', sourceOfTruthName: 'Source of Truth', sourceOfTruthPort: 6011 };
     document.getElementById('ownLabel').textContent = devConfig.ownName;
-    document.getElementById('sourceOfTruthLabel').textContent = `${devConfig.sourceOfTruthName} (Source of Truth)`;
+    document.getElementById('sourceOfTruthLabel').textContent = `${devConfig.sourceOfTruthName} v${devConfig.sourceOfTruthVersion} (Truth)`;
 
     const ownIframe = document.getElementById('own');
     const sourceOfTruthIframe = document.getElementById('sourceOfTruth');
@@ -402,6 +493,133 @@
       }
     });
 
+
+    // Diff this project's story against the source-of-truth
+    // golden at the configured viewport, computed server-side (see
+    // src/devServer.ts), not from what the visible panes happen to show.
+    const diffBadge = document.getElementById('diffBadge');
+    const thresholdInput = document.getElementById('thresholdInput');
+    const diffResult = document.getElementById('diffResult');
+    const saveThresholdBtn = document.getElementById('saveThresholdBtn');
+    const computeDiffBtn = document.getElementById('computeDiffBtn');
+    const goldenView = document.getElementById('goldenView');
+    const goldenImg = document.getElementById('goldenImg');
+    const goldenSpinner = document.getElementById('goldenSpinner');
+    const sourceOfTruthStatusLabel = document.getElementById('sourceOfTruthStatus');
+    let goldenResult = null;
+    let computing = false;
+    let goldenViewKind = 'live';
+    let goldenStoryId = '';
+    let goldenRequest = 0;
+    let savedThreshold = null;
+    let thresholdStoryId = '';
+
+    function renderBadge() {
+      const r = goldenResult;
+      diffResult.style.display = r ? 'inline-flex' : 'none';
+      if (!r) return;
+      diffBadge.className = 'diff-badge';
+      if (r.status === 'no-golden') {
+        diffBadge.textContent = 'No golden';
+      } else if (r.status === 'size-mismatch') {
+        diffBadge.textContent = 'Size mismatch';
+        diffBadge.classList.add('over');
+      } else {
+        diffBadge.textContent = r.diffPixels.toLocaleString();
+        diffBadge.classList.add(r.diffPixels > Number(thresholdInput.value) ? 'over' : 'under');
+      }
+      saveThresholdBtn.disabled = thresholdInput.value === '' || Number(thresholdInput.value) === savedThreshold;
+    }
+
+    // Live shows the source-of-truth's live Storybook; Golden shows its
+    // stored golden image; Compute Diff shows the diff overlay.
+    function renderGoldenImage() {
+      const live = goldenViewKind === 'live';
+      sourceOfTruthIframe.style.display = live ? '' : 'none';
+      document.getElementById('sotSpacer').style.display = live ? '' : 'none';
+      goldenView.style.display = live ? 'none' : 'flex';
+      goldenSpinner.style.display = !live && goldenViewKind === 'diff' && computing ? 'block' : 'none';
+      if (live) return;
+      const src = goldenViewKind === 'golden'
+        ? `/__golden/image?id=${encodeURIComponent(goldenStoryId)}`
+        : goldenResult && goldenResult.diff;
+      if (src) goldenImg.src = src; else goldenImg.removeAttribute('src');
+      sourceOfTruthStatusLabel.textContent = '';
+      if (goldenViewKind === 'diff' && !computing && goldenResult && !goldenResult.diff) {
+        sourceOfTruthStatusLabel.textContent = 'No diff image';
+      }
+    }
+
+    function resetDiff() {
+      goldenRequest++;
+      goldenResult = null;
+      computing = false;
+      computeDiffBtn.disabled = false;
+      renderBadge();
+      renderGoldenImage();
+    }
+
+    async function refreshDiff() {
+      if (!goldenStoryId) return;
+      const request = ++goldenRequest;
+      goldenResult = null;
+      computing = true;
+      computeDiffBtn.disabled = true;
+      renderBadge();
+      renderGoldenImage();
+      try {
+        const response = await fetch(`/__golden/diff?id=${encodeURIComponent(goldenStoryId)}`);
+        const data = await response.json();
+        if (request !== goldenRequest) return;
+        if (!response.ok) throw new Error(data.error);
+        goldenResult = data;
+        savedThreshold = data.threshold;
+        // Recomputing keeps an edited threshold; a new story starts from the
+        // configured one.
+        if (thresholdStoryId !== goldenStoryId) {
+          thresholdInput.value = data.threshold;
+          thresholdStoryId = goldenStoryId;
+        }
+      } catch (err) {
+        if (request !== goldenRequest) return;
+        alert(`Diff failed: ${err.message}`);
+      }
+      computing = false;
+      computeDiffBtn.disabled = false;
+      renderBadge();
+      renderGoldenImage();
+    }
+
+    thresholdInput.addEventListener('input', renderBadge);
+    // Save writes this story's override (`stories.<id>.sourceOfTruthThreshold`)
+    // to the config file.
+    saveThresholdBtn.addEventListener('click', async () => {
+      const value = Number(thresholdInput.value);
+      const response = await fetch('/__golden/threshold', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: goldenStoryId, value }),
+      });
+      if (!response.ok) {
+        alert(`Could not save threshold: ${(await response.json()).error}`);
+        return;
+      }
+      savedThreshold = value;
+      renderBadge();
+    });
+    goldenImg.addEventListener('error', () => {
+      if (goldenViewKind === 'golden') sourceOfTruthStatusLabel.textContent = 'No golden image';
+    });
+    document.querySelectorAll('.golden-tabs > button').forEach((button) => {
+      button.addEventListener('click', () => {
+        goldenViewKind = button.dataset.view;
+        document.querySelectorAll('.golden-tabs > button').forEach((b) => b.classList.toggle('active', b === button));
+        renderGoldenImage();
+        // Compute Diff runs the diff every time it is pressed.
+        if (goldenViewKind === 'diff') refreshDiff();
+      });
+    });
+
     // Same-Origin Polling Syncing
     let lastUrl = '';
     setInterval(() => {
@@ -440,6 +658,11 @@
               window.history.replaceState({}, '', outerUrl.pathname + outerUrl.search);
             }
             
+            if (goldenStoryId !== id) {
+              goldenStoryId = id;
+              resetDiff();
+            }
+
             let sotUrl = `http://localhost:${devConfig.sourceOfTruthPort}/iframe.html?id=${id}&viewMode=story`;
             if (args) {
               sotUrl += `&args=${args}`;

@@ -49,6 +49,7 @@
   },
   "scripts": {
     "build": "vite build --mode library",
+    "dev": "node scripts/dev.mjs",
     "postbuild": "chmod +x dist/cli.js"
   },
   "dependencies": {
