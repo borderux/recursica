@@ -1,5 +1,11 @@
 # @recursica/token-analyzer
 
+## 1.9.0
+
+### Minor Changes
+
+- 6137ec4: Add `--framework angular` (scans plain `.css`/`.scss` component styles) and resolve runtime-built variable names by prefix instead of reporting them as missing.
+
 ## 1.8.0
 
 ### Minor Changes
