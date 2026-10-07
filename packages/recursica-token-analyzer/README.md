@@ -28,6 +28,18 @@ npm run analyze-tokens
 
 _(This runs `analyze-tokens --css recursica_variables_scoped.css --dir src/components --output token-analysis.json`)_
 
+### Angular (`--framework angular`)
+
+By default the analyzer scans React sources (`.module.css`, `.tsx`, `.ts`). For Angular adapters pass `--framework angular`, which scans every `.css`/`.scss` component stylesheet (e.g. `*.component.css`, overlay stylesheets) plus `.ts` (excluding `.spec.ts`). Layer enforcement and the `recursica-allow-brand` / `recursica-ignore` directives work the same way in those stylesheets (put the header comment at the top of the file, before the first rule):
+
+```bash
+analyze-tokens --framework angular --css recursica_variables_scoped.css --dir projects/<lib>/src/lib --output token-analysis.json
+```
+
+### Dynamic variable names
+
+A reference built at runtime — `var(--recursica_x_${layout}_y)` in a template string, or `'var(--recursica_x_' + layout + '_y)'` — can't be resolved to one name. The analyzer treats the static prefix as a wildcard: every defined variable starting with it counts as used, and the prefix is reported as missing only if no defined variable matches. Names in prose or comments that aren't complete `var(--name)` references (e.g. `--recursica_x_*`) are ignored.
+
 ### 2. CI / Build Integration (Ultra-Strict Mode)
 
 The analyzer is deeply integrated into the adapter build pipelines. It runs automatically during the `prebuild` hook.

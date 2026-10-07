@@ -1,5 +1,11 @@
 # @recursica/adapter-common
 
+## 1.2.0
+
+### Minor Changes
+
+- 9d73c4f: `Text` `variant` now accepts any `brand.typography` style name as well as `body`, `caption` and `overline`; the `body-small`, `subtitle` and `subtitle-small` suggestions are gone because Forge never defines them.
+
 ## 1.1.1
 
 ### Patch Changes
