@@ -9,16 +9,18 @@ function parseArgs() {
     css: "recursica_variables_scoped.css",
     dir: "src/components",
     output: "token-analysis.json",
+    framework: "react",
   };
 
   for (let i = 0; i < args.length; i++) {
     if (args[i] === "--css") options.css = args[++i];
     else if (args[i] === "--dir") options.dir = args[++i];
     else if (args[i] === "--output") options.output = args[++i];
+    else if (args[i] === "--framework") options.framework = args[++i];
     else if (args[i] === "--cleanup") options.cleanup = true;
     else if (args[i] === "--help") {
       console.log(
-        "Usage: analyze-tokens [--css file.css] [--dir src/components] [--output token-analysis.json] [--cleanup]",
+        "Usage: analyze-tokens [--css file.css] [--dir src/components] [--output token-analysis.json] [--framework react|angular] [--cleanup]",
       );
       process.exit(0);
     }
@@ -26,12 +28,34 @@ function parseArgs() {
   return options;
 }
 
+// Which files count as component source/styles. "react" (default) is CSS modules + TS/TSX;
+// "angular" also scans plain component stylesheets (.css/.scss, e.g. *.component.css) since
+// Angular components don't use CSS modules. Everything else (layer enforcement, exemptions) is
+// shared between the two.
+const FRAMEWORKS = {
+  react: {
+    isStyle: (f) => f.endsWith(".module.css"),
+    isSource: (f) => f.endsWith(".tsx") || f.endsWith(".ts"),
+  },
+  angular: {
+    isStyle: (f) => f.endsWith(".css") || f.endsWith(".scss"),
+    isSource: (f) => f.endsWith(".ts") && !f.endsWith(".spec.ts"),
+  },
+};
+
 function toKebabCase(str) {
   return str.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
 }
 
 function analyze() {
   const options = parseArgs();
+  const framework = FRAMEWORKS[options.framework];
+  if (!framework) {
+    console.error(
+      `❌ Error: unknown --framework '${options.framework}' (expected: ${Object.keys(FRAMEWORKS).join(", ")}).`,
+    );
+    process.exit(1);
+  }
 
   let cssPath = options.css;
   if (!fs.existsSync(cssPath)) {
@@ -66,6 +90,7 @@ function analyze() {
   // 2. Build Component Index & Extract Usage
   const componentsIndex = {};
   const usedVarsMap = new Map(); // varName -> set of { componentId, filePath }
+  const dynamicPrefixes = []; // { prefix, componentId, filePath } — var(--x_${...}) built at runtime
   let exemptions = new Set();
   const exemptionLocationsMap = new Map(); // varName -> set of { componentId, filePath, line }
   const layerViolations = []; // { variable, layer, componentId, filePath, line, reason }
@@ -91,11 +116,7 @@ function analyze() {
           const fullPath = path.join(dirPath, f);
           if (fs.statSync(fullPath).isDirectory()) {
             walkAndExtract(fullPath);
-          } else if (
-            fullPath.endsWith(".module.css") ||
-            fullPath.endsWith(".tsx") ||
-            fullPath.endsWith(".ts")
-          ) {
+          } else if (framework.isStyle(fullPath) || framework.isSource(fullPath)) {
             componentsIndex[compId].files.push(fullPath);
             const content = fs.readFileSync(fullPath, "utf-8");
 
@@ -105,6 +126,21 @@ function analyze() {
             ];
             matches.forEach((m) => {
               const varName = m[1];
+              // A complete reference is followed by `)` or `,` (fallback). Anything else is only a
+              // prefix: either a variable assembled at runtime (`${…}` in a template string, or a
+              // closing quote for `'var(--x_' + y`), which we resolve against the dictionary
+              // below, or a pattern in prose/comments (`--x_*`, `--x_...`), which we ignore.
+              const after = content.slice(m.index + m[0].length);
+              if (!/^\s*[,)]/.test(after)) {
+                if (/^(\$\{|['"`])/.test(after)) {
+                  dynamicPrefixes.push({
+                    prefix: varName,
+                    componentId: compId,
+                    filePath: fullPath,
+                  });
+                }
+                return;
+              }
               if (!usedVarsMap.has(varName))
                 usedVarsMap.set(varName, new Set());
               // Use JSON.stringify to ensure Set uniqueness based on contents
@@ -119,7 +155,7 @@ function analyze() {
             // primitives, and may only touch --recursica_brand_* directly when the CSS file's
             // own header explicitly exempts that variable via recursica-allow-brand. Scoped to
             // .module.css (the header-exemption model doesn't map cleanly onto .tsx files).
-            if (fullPath.endsWith(".module.css")) {
+            if (framework.isStyle(fullPath)) {
               const headerEnd = content.indexOf("{");
               const header =
                 headerEnd === -1 ? content : content.slice(0, headerEnd);
@@ -192,9 +228,28 @@ function analyze() {
     });
   }
 
-  // 3. Find Missing Variables
+  // 2b. Resolve dynamic prefixes: every defined variable under the prefix counts as used. A prefix
+  // that matches nothing is reported as missing (as `<prefix>${…}`).
   const missingVars = [];
   const brokenComponents = new Set();
+  dynamicPrefixes.forEach(({ prefix, componentId, filePath }) => {
+    const matched = [...definedVars].filter((v) => v.startsWith(prefix));
+    if (matched.length === 0) {
+      brokenComponents.add(componentId);
+      missingVars.push({
+        variable: `${prefix}\${…}`,
+        componentId,
+        files: [filePath],
+      });
+      return;
+    }
+    matched.forEach((varName) => {
+      if (!usedVarsMap.has(varName)) usedVarsMap.set(varName, new Set());
+      usedVarsMap.get(varName).add(JSON.stringify({ componentId, filePath }));
+    });
+  });
+
+  // 3. Find Missing Variables
 
   usedVarsMap.forEach((usageSet, varName) => {
     if (!definedVars.has(varName)) {
