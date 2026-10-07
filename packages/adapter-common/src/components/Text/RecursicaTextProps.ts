@@ -1,15 +1,11 @@
 import React from "react";
 
 /**
- * Supported typographical layout variants in Recursica.
+ * Typography style applied by `Text`: one of the built-in styles, or the name of any custom
+ * style defined under `brand.typography` (rendered with its `recursica_brand_typography_<name>`
+ * class). `string & {}` keeps editor autocomplete for the built-ins while accepting any name.
  */
-export type TextVariant =
-  | "body"
-  | "body-small"
-  | "caption"
-  | "overline"
-  | "subtitle"
-  | "subtitle-small";
+export type TextVariant = "body" | "caption" | "overline" | (string & {});
 
 /**
  * Supported semantic color options for text in Recursica.
