@@ -1,5 +1,11 @@
 # @recursica/adapter-common
 
+## 1.2.1
+
+### Patch Changes
+
+- 527f777: Document the cross-adapter fan-out process, including testing against source-of-truth goldens, in `docs/PIPELINE.md`, and add `docs/ADAPTER_AGENT_INSTRUCTIONS.md` for per-adapter agents.
+
 ## 1.2.0
 
 ### Minor Changes
