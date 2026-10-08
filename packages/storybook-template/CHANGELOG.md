@@ -1,5 +1,13 @@
 # @recursica/storybook-template
 
+## 0.7.16
+
+### Patch Changes
+
+- e02caf0: List the Angular Material adapter on the Adapters page.
+- Updated dependencies [527f777]
+  - @recursica/adapter-common@1.2.1
+
 ## 0.7.15
 
 ### Patch Changes
