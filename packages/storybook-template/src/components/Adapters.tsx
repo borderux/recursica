@@ -104,6 +104,23 @@ export function AdaptersContent() {
             Switch to MUI Storybook
           </a>
         </div>
+        <div style={cardStyle}>
+          <div>
+            <h2 style={headingStyle}>Angular Material Adapter</h2>
+            <p style={bodyStyle}>
+              Built on top of Angular Material. Use this adapter for Angular
+              applications that need to conform to Recursica guidelines.
+            </p>
+          </div>
+          <a
+            href="https://borderux.github.io/recursica-adapter-angular-material/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="adapter-btn"
+          >
+            Switch to Angular Material Storybook
+          </a>
+        </div>
       </section>
     </div>
   );
