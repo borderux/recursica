@@ -52,3 +52,15 @@ The canonical/delta split with a single source of truth is only for **contributo
 3. Add a story per [`docs/COMPONENT_STORYBOOK_GUIDE.md`](./COMPONENT_STORYBOOK_GUIDE.md) (canonical) and your adapter's delta, using the shared decorators/config from `storybook-template` (already wired into each adapter's `.storybook/` directory).
 4. Add the component's `USAGE.md` (and `{COMPONENT}_IMPLEMENTATION_NOTES.md` if it required layout workarounds) inside that adapter's component folder, and update that adapter's `llms.txt`.
 5. If you built the component on the source-of-truth adapter, capture golden images there (`--update-golden`) and publish a release so other adapters' `adapter-tester` divergence checks have something to diff against.
+
+## Making a change across adapters (the fan-out process)
+
+Adapters are kept as common as possible across UI kits and technologies (React, Angular, …). This document and the canonical guides in `adapter-common/docs/` hold the shared behavior and process; each adapter extends them with its own specifics in its own repo.
+
+1. **Implement in the source-of-truth adapter first** (mantine-v8), left uncommitted, with its goldens updated (`adapter-tester:update-golden`).
+2. **Get the diff and goldens reviewed and approved** by the maintainer.
+3. **Merge and release the source-of-truth adapter before fan-out.** Other adapters are verified against its published goldens (see below), so the new goldens must be merged and released first, or the agents have nothing correct to compare to.
+4. **Fan out** to every other adapter (mui-v7, beam, angular-material), one stateless agent per adapter. Agents share no memory, so the prompt carries the goal, the approved diff and the target repo, and points the agent at `ADAPTER_AGENT_INSTRUCTIONS.md`.
+5. **Each agent branches, commits, pushes and opens a PR** (never merges to `main`), adds a `.changeset/*.md`, and reports the PR link and any gaps.
+
+Agents follow [`ADAPTER_AGENT_INSTRUCTIONS.md`](./ADAPTER_AGENT_INSTRUCTIONS.md): required reading, rules, and the report expected back.
