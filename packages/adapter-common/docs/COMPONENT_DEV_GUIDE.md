@@ -149,6 +149,44 @@ Two acceptable ways to make a specific prop fully un-settable by a caller (stron
 - **Caller `className` / `style`** – You may allow optional `className` and `style` to be passed through to the library root so callers can add overrides. Document that Recursica styling comes from the module and caller values are additive.
 - **Multi-library** – If the adapter supports multiple libraries, use library-specific prop bags (e.g. `<library>?: { ... }`) so callers can pass library-specific options. The implementation for each library reads its bag and merges into the props passed to that library.
 
+### 3.5 Native attributes and accessibility passthrough
+
+§3.1 says to use standard HTML props as-is. This section says which ones, where they must land, and which ones the design system keeps for itself. The rules are kit-agnostic: every adapter implements the same policy, even though the mechanics differ (React spreads `...rest`; Angular has no spreading and declares each input, see that adapter's guide).
+
+**1. Forward to the element that carries the semantics, never the wrapper.** An attribute set on a Recursica component must reach the native element that a user, a screen reader or a form acts on (the `<input>`, `<button>`, `<a>`, the `role="dialog"` node), not an outer layout element or a host element that merely contains it. If a caller writes `aria-label="Save"` on a component and the name ends up on a wrapper with no role, it is silently ignored; treat that as a bug in the adapter. For overlays whose real node lives in a portal (dialogs, popovers, menus), forward through the kit's own config, not through the trigger.
+
+**2. The standard set.** Every component that wraps one native interactive or labelable element accepts, at minimum:
+
+| Attribute | Notes |
+| --- | --- |
+| `aria-label`, `aria-labelledby`, `aria-describedby` | Always. A form control's `aria-describedby` is merged with the ids the form-control wrapper adds for help and error text, never replaced by them. |
+| `id` | The id lands on the same native element the label's `for` points at. |
+
+Add these only where the component has the native element for them to apply to:
+
+| Attribute | Applies to |
+| --- | --- |
+| `tabindex` | Interactive elements whose focus is not managed by the component (roving `tabindex` in tabs, trees, steppers and menus is derived, never caller-set). |
+| `name`, `form` | Native form controls. |
+| `autocomplete`, `maxlength`, `minlength`, `spellcheck`, `inputmode` | Text-like inputs only, and only when they make sense for the control (not a date or time mask). |
+| `type`, `title`, `rel`, `target`, `download` | Buttons and links, per their native meaning. |
+
+`title` and `data-*` are not part of the default set. Static `data-*` on the component's root is fine and is not forwarded.
+
+**3. Each component decides; it is opt-out, not blanket.** Walk through the list per component and record the result in that component's `IMPLEMENTATION_NOTES.md` as a `Passthrough` section: what is forwarded, to which element, and what is withheld and why. A component with no native element of its own (layout primitives such as `Flex`, `Stack`, `Group`, `Container`) forwards nothing, because the root already is the element a caller's attributes land on.
+
+**4. Never expose what the design system owns.** The passthrough is for identity and accessibility, not for appearance or behaviour. Do not expose, even though the underlying kit offers them:
+- anything that changes the look: kit `color`, `size`, `variant`, `radius`, `appearance`, density, ripple, class names for slots, per-component style props (these stay behind `overStyled`, §3.1);
+- behaviour the design system fixes: a modal's `aria-modal`, a menu's backdrop, a tooltip's trigger events and positions, overlay `zIndex` and portal target;
+- attributes derived from component state and linked across parts: `aria-selected`, `aria-controls`, `aria-expanded`, `aria-current` where the component computes them, and the ids that link tabs to panels or accordion controls to regions. A caller-set value would break the link.
+Where the kit exposes one of these and it is genuinely needed, add it as a deliberate, named Recursica input instead of passing it through.
+
+**5. Name the thing a screen reader announces.** Every interactive component must be nameable: a visible label, `aria-label` or `aria-labelledby`. Components with no visible label of their own (icon-only buttons, segmented controls, tablists, trees, dialogs) must make the name easy to supply and, where the kit allows, enforce it (see `RequireAccessibleLabel`). Any fixed English string the component renders for assistive technology ("Close", "Clear selection", pagination labels) is a default for an overridable prop, never a hard-coded value, so integrators can translate it.
+
+**6. Overlays are named and keyed consistently.** A dialog-like surface gets `role`, an accessible name (its title by default, or the caller's), and independent `Escape` and click-outside handling. A panel is never modal (see Panel's notes); a modal is.
+
+**7. Verify where the attribute lands.** A passthrough is only done when a test, story or manual check shows the value on the intended native element and on no wrapper. For a component library with stories, add an `Accessibility` story that sets the standard attributes on the component and check the rendered DOM.
+
 ---
 
 ## 4. Structure and behavior
