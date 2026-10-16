@@ -118,7 +118,7 @@ jobs:
         with:
           publish: npm run release
         env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
 
       # Publish packages (create zip files for figma plugins)
