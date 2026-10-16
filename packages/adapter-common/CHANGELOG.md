@@ -1,5 +1,11 @@
 # @recursica/adapter-common
 
+## 1.3.0
+
+### Minor Changes
+
+- 1058336: Panel and Modal props now require `title` and `onClose`, add `closeButtonAriaLabel` and a discouraged `header` override, and Modal drops `withCloseButton`, so every adapter renders a header with an always-present Close button.
+
 ## 1.2.1
 
 ### Patch Changes
