@@ -51,6 +51,7 @@ If you cannot bring a component's styling within threshold, or a unit test still
 ## Rules
 
 - Match the reference change's behavior using the target UI kit's idioms; do not copy library-specific code across.
+- If the target repo depends on `@recursica/adapter-common`, bump it to the version the source-of-truth release uses and run `npm install`. (The Angular Material adapter has no such dependency.)
 - No silent fallbacks or defaults; let exceptions propagate.
 - Record adapter-specific details and deviations from the reference in the component's `IMPLEMENTATION_NOTES.md`.
 - Add one `.changeset/*.md` listing every affected package (1-2 sentences: what changed and the user-visible effect).
