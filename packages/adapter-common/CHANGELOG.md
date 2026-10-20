@@ -1,5 +1,12 @@
 # @recursica/adapter-common
 
+## 1.3.1
+
+### Patch Changes
+
+- 7c55d83: Adapter agent instructions now require an expected-change list, story/test parity with the source-of-truth (`_SPECIFIC` exempt), failure investigation, and a not-to-merge PR when a component cannot be matched.
+- fdb2b23: Added the canonical `docs/CREATING_AN_ADAPTER.md` (moved from the Angular Material adapter); adapters now point to it instead of keeping their own copy.
+
 ## 1.3.0
 
 ### Minor Changes
