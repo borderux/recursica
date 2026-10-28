@@ -5,22 +5,22 @@ import {
   injectOverStyledStyles,
   registerOverStyledConsoleCommand,
 } from "../utils/overStyledControl";
-import { Layer } from "../components/Layer/Layer";
 import {
   RecursicaManifestContext,
   type RecursicaManifest,
 } from "./RecursicaManifestContext";
 
 const THEME_ATTRIBUTE = "data-recursica-theme";
+const LAYER_ATTRIBUTE = "data-recursica-layer";
 
 export interface RecursicaThemeProviderProps {
   /** 'light' | 'dark'. Defaults to 'light' when omitted. */
   theme?: "light" | "dark";
   /**
-   * When true (the default), automatically wraps `children` in a `<Layer layer={0}>`
-   * so the base page surface/border/elevation variables resolve without any extra
-   * setup. Set to `false` if you want to place the base `Layer` yourself (e.g. to use
-   * `contentsOnly`, or to control exactly where in the tree layer 0 starts).
+   * When true (the default), sets `data-recursica-layer="0"` on `document.body` so the
+   * base page surface/text/padding apply to the body without an extra wrapper element.
+   * Set to `false` if you want to place the base `Layer` yourself (e.g. to control
+   * exactly where in the tree layer 0 starts).
    */
   initLayer0?: boolean;
   /**
@@ -34,7 +34,7 @@ export interface RecursicaThemeProviderProps {
 /**
  * Sets data-recursica-theme on document.documentElement so Recursica scoped CSS
  * (e.g. recursica_variables_scoped.css) applies the correct theme and layer-0 variables.
- * Default is light theme. Wraps children in a layer-0 `Layer` by default (see `initLayer0`).
+ * Default is light theme. Applies layer 0 to document.body by default (see `initLayer0`).
  */
 export function RecursicaThemeProvider({
   children,
@@ -51,18 +51,22 @@ export function RecursicaThemeProvider({
   }, [theme]);
 
   useEffect(() => {
+    if (!initLayer0) return;
+    const body = document.body;
+    body.setAttribute(LAYER_ATTRIBUTE, "0");
+    return () => {
+      body.removeAttribute(LAYER_ATTRIBUTE);
+    };
+  }, [initLayer0]);
+
+  useEffect(() => {
     injectOverStyledStyles();
     registerOverStyledConsoleCommand();
   }, []);
 
-  const content = initLayer0 ? (
-    <Layer layer={0}>{children}</Layer>
-  ) : (
-    <>{children}</>
-  );
   return (
     <RecursicaManifestContext.Provider value={manifest}>
-      {content}
+      {children}
     </RecursicaManifestContext.Provider>
   );
 }

@@ -20,13 +20,11 @@
   border-style: unset;
 }
 
-.root[data-recursica-layer="0"] {
+/* body: RecursicaThemeProvider (initLayer0) sets data-recursica-layer="0" on <body> */
+.root[data-recursica-layer="0"],
+:global(body)[data-recursica-layer="0"] {
   background-color: var(--recursica_brand_layer_0_properties_surface);
   color: var(--recursica_brand_layer_0_elements_text_color);
-  border-color: var(--recursica_brand_layer_0_properties_border-color);
-  border-width: var(--recursica_brand_layer_0_properties_border-size);
-  border-radius: var(--recursica_brand_layer_0_properties_border-radius);
-  box-shadow: var(--recursica_brand_layer_0_properties_elevation);
   padding: var(--recursica_brand_layer_0_properties_padding);
 }
 

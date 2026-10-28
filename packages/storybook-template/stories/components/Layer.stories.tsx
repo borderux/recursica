@@ -9,7 +9,7 @@ const meta: Meta<typeof Layer> = {
     docs: {
       description: {
         component:
-          "`Layer` binds a subtree to one of Recursica's four elevation layers (0-3) by setting `data-recursica-layer` on its root, which scopes the surface, border, and elevation CSS variables from `recursica_variables_scoped.css` to that subtree. `RecursicaThemeProvider` wraps the app in a `layer={0}` `Layer` automatically — wrap anything visually elevated above the page background (a Card, Modal, Popover, etc.) in its own `Layer`. This story itself is already rendered inside a `Layer`; use the global `layer`/`withLayer` Story Controls to preview that outer layer, and see below for composing additional nested layers.",
+          "`Layer` binds a subtree to one of Recursica's four elevation layers (0-3) by setting `data-recursica-layer` on its root, which scopes the surface, border, and elevation CSS variables from `recursica_variables_scoped.css` to that subtree. `RecursicaThemeProvider` applies layer 0 to `<body>` automatically — wrap anything visually elevated above the page background (a Card, Modal, Popover, etc.) in its own `Layer`. This story itself is already rendered inside a `Layer`; use the global `layer`/`withLayer` Story Controls to preview that outer layer, and see below for composing additional nested layers.",
       },
     },
   },
