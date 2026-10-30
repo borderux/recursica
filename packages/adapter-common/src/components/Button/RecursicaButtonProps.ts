@@ -13,7 +13,7 @@ export interface RecursicaButtonProps {
    *
    * Forge axis `styles` (solid, text, outline).
    */
-  variant?: "solid" | "outline" | "text";
+  variant?: "solid" | "outline" | "text" | (string & {});
   /**
    * The size of the button
    *

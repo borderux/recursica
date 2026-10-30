@@ -13,7 +13,7 @@ export interface RecursicaLoaderProps {
    *
    * Not a Forge axis (Forge's `loader` has only `sizes`).
    */
-  variant?: "oval" | "bars" | "dots";
+  variant?: "oval" | "bars" | "dots" | (string & {});
   /**
    * Map to Recursica sizes
    *

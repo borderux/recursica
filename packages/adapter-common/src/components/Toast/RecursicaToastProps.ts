@@ -10,7 +10,7 @@ export interface RecursicaToastProps {
    *
    * Forge axis `styles`.
    */
-  variant?: "default" | "error" | "success";
+  variant?: "default" | "error" | "success" | (string & {});
   /** Forced disabled loading state property */
   loading?: false;
 }

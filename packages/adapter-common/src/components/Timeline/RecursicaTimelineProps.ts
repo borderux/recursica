@@ -27,7 +27,12 @@ export interface RecursicaTimelineItemProps {
    *
    * Forge axis `types` (default, icon, icon-alternative, avatar).
    */
-  bulletVariant?: "default" | "avatar" | "icon" | "icon-alternative";
+  bulletVariant?:
+    | "default"
+    | "avatar"
+    | "icon"
+    | "icon-alternative"
+    | (string & {});
   /** Custom element to render inside the bullet circle */
   bullet?: React.ReactNode;
 }

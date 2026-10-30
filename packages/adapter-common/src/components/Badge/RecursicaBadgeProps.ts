@@ -10,5 +10,5 @@ export interface RecursicaBadgeProps {
    *
    * Forge axis `styles`.
    */
-  variant?: "alert" | "primary-color" | "success" | "warning";
+  variant?: "alert" | "primary-color" | "success" | "warning" | (string & {});
 }
