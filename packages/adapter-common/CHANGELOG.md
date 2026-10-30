@@ -1,5 +1,15 @@
 # @recursica/adapter-common
 
+## 1.5.0
+
+### Minor Changes
+
+- 447a063: `variant` props on Avatar, Badge, Button, Loader, Table, Tabs, Toast, AssistiveElement (`assistiveVariant`) and Timeline (`bulletVariant`) now accept any string in addition to the known values, so new variants can be added without a type change.
+
+### Patch Changes
+
+- 2158a04: Fix a dark border around `Layer` at layer 0. It now reads the layer-0 border, radius and elevation tokens like layers 1 to 3.
+
 ## 1.4.0
 
 ### Minor Changes
