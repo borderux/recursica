@@ -70,6 +70,11 @@ than) the unused-variable warnings above:
   explaining why the component needs to reach past the ui-kit layer (see any of Button, Chip,
   DatePicker, etc. for examples — most are the global hover/focus/disabled state tokens).
 
+- **Only stable ui-kit names.** A `--recursica_ui-kit_components_*` read containing `_variants_`,
+  `_modes_`, `_themes_` or `_layer_N_` is a violation (`layer: "unstable"`). Read the stable
+  `--recursica_ui-kit_components_<component>_properties_*` name instead. A genuine exception can be
+  exempted with `/* recursica-ignore: <var> */` in the same file. Applies to CSS and source files, and only when the CSS header says `Transform version: 1.8.0` or later (earlier exports have no stable names; the check is off and the analyzer says so).
+
 Violations are reported the same way as broken variables: printed to the console, written to
 `layerViolations` in the JSON report, and the process exits with status `1`.
 
