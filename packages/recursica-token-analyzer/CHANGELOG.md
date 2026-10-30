@@ -1,5 +1,11 @@
 # @recursica/token-analyzer
 
+## 1.10.0
+
+### Minor Changes
+
+- 82a8418: Flag component reads of unstable `ui-kit_components_*` names (`_variants_`, `_modes_`, `_themes_`, `_layer_N_`) as layer violations, failing the build. Only for CSS transform version 1.8.0 or later, where unused-variable reports also count only stable names. Exempt with `recursica-ignore`.
+
 ## 1.9.0
 
 ### Minor Changes

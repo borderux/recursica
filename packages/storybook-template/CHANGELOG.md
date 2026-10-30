@@ -1,5 +1,15 @@
 # @recursica/storybook-template
 
+## 0.7.17
+
+### Patch Changes
+
+- 9b0b98b: `RecursicaThemeProvider`'s `initLayer0` now sets `data-recursica-layer="0"` on `<body>` and styles it directly instead of wrapping children in an extra `Layer` div. Layer 0 no longer applies border or elevation.
+- Updated dependencies [9bcddc9]
+- Updated dependencies [9bcddc9]
+- Updated dependencies [9b0b98b]
+  - @recursica/adapter-common@1.4.0
+
 ## 0.7.16
 
 ### Patch Changes
