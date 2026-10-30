@@ -95,6 +95,9 @@ function analyze() {
   const [major, minor] = versionMatch
     ? versionMatch.slice(1).map(Number)
     : [0, 0];
+  const isUnstableName = (v) =>
+    v.startsWith("--recursica_ui-kit_components_") &&
+    /_(variants|modes|themes)_|_layer_\d+_/.test(v);
   const enforceStableNames = major > 1 || (major === 1 && minor >= 8);
   console.log(
     versionMatch
@@ -164,8 +167,7 @@ function analyze() {
               // variant/mode/theme/layer-specific ones. Exempt with `recursica-ignore: <var>`.
               if (
                 enforceStableNames &&
-                varName.startsWith("--recursica_ui-kit_components_") &&
-                /_(variants|modes|themes)_|_layer_\d+_/.test(varName) &&
+                isUnstableName(varName) &&
                 !new RegExp(`recursica-ignore:\\s*${varName}(?![\\w-])`).test(
                   content,
                 )
@@ -352,10 +354,13 @@ function analyze() {
   // enforcement of that rule.
   const unusedVars = new Set(definedVars);
   usedVarsMap.forEach((_, varName) => unusedVars.delete(varName));
+  // From transform 1.8.0 components read only the stable `_properties_` names, so the
+  // variant/mode/theme/layer-specific ones are never expected to be used either.
   Array.from(unusedVars).forEach((varName) => {
     if (
       varName.startsWith("--recursica_brand_") ||
-      varName.startsWith("--recursica_tokens_")
+      varName.startsWith("--recursica_tokens_") ||
+      (enforceStableNames && isUnstableName(varName))
     ) {
       unusedVars.delete(varName);
     }
