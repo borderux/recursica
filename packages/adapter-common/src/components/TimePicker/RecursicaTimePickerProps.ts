@@ -2,6 +2,9 @@ import React from "react";
 
 /**
  * Props for the Recursica TimePicker component.
+ *
+ * Forge mapping (names in `recursica_ui-kit.json` / `--recursica_ui-kit_components_<contract>_*`):
+ * - Contract `time-picker`. Axes: `layouts` (stacked, side-by-side) ← `formLayout`; `states` error ← `error`, disabled ← `disabled`.
  */
 export interface RecursicaTimePickerProps {
   /** Whether the seconds segment should be shown and editable. Defaults to `false`. */

@@ -19,6 +19,9 @@ export type TextEmphasis = "low" | "high";
 
 /**
  * Props for the Recursica Text component.
+ *
+ * Forge mapping (names in `recursica_ui-kit.json` / `--recursica_ui-kit_components_<contract>_*`):
+ * - Not a Forge component: intentionally outside the UI kit, so it has no `ui-kit_components_*` contract.
  */
 export interface RecursicaTextProps {
   /** Visual style variant layout */

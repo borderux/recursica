@@ -149,6 +149,15 @@ Two acceptable ways to make a specific prop fully un-settable by a caller (stron
 - **Caller `className` / `style`** – You may allow optional `className` and `style` to be passed through to the library root so callers can add overrides. Document that Recursica styling comes from the module and caller values are additive.
 - **Multi-library** – If the adapter supports multiple libraries, use library-specific prop bags (e.g. `<library>?: { ... }`) so callers can pass library-specific options. The implementation for each library reads its bag and merges into the props passed to that library.
 
+### 3.4.1 Forge name mapping lives in the props file
+
+Forge (the export from `recursica_ui-kit.json`) names components "contracts" and variants "axes" (`styles`, `sizes`, `layouts`, `types`, `orientation`, `selection-states`, `states`), which differ from Recursica's prop names (`variant`, `size`, `formLayout`, ...). Record the mapping in TSDoc in the component's `Recursica<Name>Props.ts`, not in a separate Markdown file, so it travels with the code:
+
+- The interface doc lists the Forge contract name, and for each Forge axis the prop it maps to (`styles` ← `variant`), plus any axis that is derived from state or children rather than a prop (say so).
+- Forge parts that are separate contracts here but children in Recursica (`*-item`, `*-group`, accordion and table parts) are named on the parent component.
+- Each prop that maps to an axis carries a `Forge axis ...` line; a prop with no Forge equivalent says `Not a Forge axis`.
+- A component with no Forge contract says so. `RECURSICA_COMPONENTS` in `src/types.ts` carries the Forge contract for every component.
+
 ### 3.5 Native attributes and accessibility passthrough
 
 §3.1 says to use standard HTML props as-is. This section says which ones, where they must land, and which ones the design system keeps for itself. The rules are kit-agnostic: every adapter implements the same policy, even though the mechanics differ (React spreads `...rest`; Angular has no spreading and declares each input, see that adapter's guide).
@@ -267,6 +276,7 @@ Add these only where the component has the native element for them to apply to:
 - [ ] displayName and JSDoc set; icon-only / unlabeled usage documented (e.g. aria-label).
 - [ ] Toolbar integration test and any required toolbar/sidebar config added.
 - [ ] Component usage, integration details, and standard import and React usage examples are documented in a public-facing `USAGE.md` file — consumer-facing prop behavior only, no internal architecture/rationale, and no reference to `IMPLEMENTATION_NOTES.md`.
+- [ ] The Forge contract and axis-to-prop mapping is documented in the component's `Recursica<Name>Props.ts` TSDoc (see 3.4.1).
 - [ ] Component-specific decisions, edge-cases, and ongoing design-system layout fixes are meticulously documented in an internal living `IMPLEMENTATION_NOTES.md` file (e.g. `Button/IMPLEMENTATION_NOTES.md`, never `BUTTON_IMPLEMENTATION_NOTES.md`) to structurally track _why_ the component logic diverges from standard library behavior.
 - [ ] Read your adapter's own `docs/COMPONENT_DEV_GUIDE.md` delta for anything library-specific (e.g. polymorphism mechanism, CSS specificity notes) not covered here.
 

@@ -2,6 +2,10 @@ import React from "react";
 
 /**
  * Props for the Recursica Accordion container component.
+ *
+ * Forge mapping (names in `recursica_ui-kit.json` / `--recursica_ui-kit_components_<contract>_*`):
+ * - Contract `accordion` (no variants). Forge also lists the parts as separate contracts; here they are children of the Accordion: `accordion-item` = AccordionItem, `accordion-header` = AccordionControl (axis `appearance` open/closed is derived from the open state), `accordion-content` = AccordionPanel.
+ * - `variant` is not a Forge axis.
  */
 export interface RecursicaAccordionProps {
   /** The `Accordion.Item` elements that make up the accordion */

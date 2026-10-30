@@ -1,5 +1,8 @@
 /**
  * Props for the Recursica NumberInput component.
+ *
+ * Forge mapping (names in `recursica_ui-kit.json` / `--recursica_ui-kit_components_<contract>_*`):
+ * - Contract `number-input`. Axes: `layouts` (stacked, side-by-side) ← `formLayout`; `states` error ← `error`, disabled ← `disabled`.
  */
 export interface RecursicaNumberInputProps {
   /** Enables/disables the controls to increment and decrement the value */

@@ -6,6 +6,9 @@ import React from "react";
  * Header contract (every adapter): a Panel always has a header with a title and a Close button.
  * The Close button is an icon-only Recursica button, `aria-label` "Close" unless
  * `closeButtonAriaLabel` is passed, and it calls `onClose`. The footer is optional.
+ *
+ * Forge mapping (names in `recursica_ui-kit.json` / `--recursica_ui-kit_components_<contract>_*`):
+ * - Contract `panel` (no variants). `placement` is not a Forge axis; it is a non-themed option kept by Recursica.
  */
 export interface RecursicaPanelProps {
   /** Header title. Required. */
@@ -25,9 +28,9 @@ export interface RecursicaPanelProps {
   /** Forces header text onto a single line truncating overflow with ellipsis.  Default is true */
   wrapHeaderText?: boolean;
   /**
-   * Direction the panel slides out from.
-   * Named `placement`, not `position`: `position` is a global `BlockedStylingKeys` entry, so
-   * it's typed `never` and stripped unless `overStyled: true`.
+   * Direction the panel slides out from. Named `placement`, not `position`: `position` is a global `BlockedStylingKeys` entry, so it's typed `never` and stripped unless `overStyled: true`.
+   *
+   * Not a Forge axis; non-themed option.
    */
   placement?: "top" | "bottom" | "left" | "right";
   /** Control visibility state */

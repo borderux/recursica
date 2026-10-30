@@ -2,6 +2,10 @@ import React from "react";
 
 /**
  * Props for the Recursica Switch component.
+ *
+ * Forge mapping (names in `recursica_ui-kit.json` / `--recursica_ui-kit_components_<contract>_*`):
+ * - Contract `switch`. Axes: `selection-states` (selected, unselected) is derived from the checked state, not a prop; `states` disabled ← `disabled`.
+ * - Forge's `switch-item` contract is this Switch when rendered inside a SwitchGroup (the item is a child of the group).
  */
 export interface RecursicaSwitchProps {
   /** Visual label next to track */
@@ -14,6 +18,9 @@ export interface RecursicaSwitchProps {
 
 /**
  * Props for the Recursica SwitchGroup component.
+ *
+ * Forge mapping (names in `recursica_ui-kit.json` / `--recursica_ui-kit_components_<contract>_*`):
+ * - Contract `switch-group`. Axis `layouts` (stacked, side-by-side) ← `formLayout`. Each Switch child maps to Forge's `switch-item`.
  */
 export interface RecursicaSwitchGroupProps {
   /** Checked values list in controlled mode — each entry matches a child Switch's own `value` */

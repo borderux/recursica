@@ -6,6 +6,9 @@ import React from "react";
  * Header contract (every adapter): a Modal always has a header with a title and a Close button.
  * The Close button is an icon-only Recursica button, `aria-label` "Close" unless
  * `closeButtonAriaLabel` is passed, and it calls `onClose`. The footer is optional.
+ *
+ * Forge mapping (names in `recursica_ui-kit.json` / `--recursica_ui-kit_components_<contract>_*`):
+ * - Contract `modal` (no variants).
  */
 export interface RecursicaModalProps {
   /** Control visibility state */

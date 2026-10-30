@@ -2,6 +2,9 @@ import React from "react";
 
 /**
  * Props for the Recursica HoverCard component.
+ *
+ * Forge mapping (names in `recursica_ui-kit.json` / `--recursica_ui-kit_components_<contract>_*`):
+ * - Contract `hover-card-popover`, shared with Popover: Forge has one contract for both, Recursica keeps HoverCard and Popover as two components.
  */
 export interface RecursicaHoverCardProps {
   /** Draw directional arrow pointing to anchor element */

@@ -2,6 +2,9 @@ import React from "react";
 
 /**
  * Props for the Recursica TextField component.
+ *
+ * Forge mapping (names in `recursica_ui-kit.json` / `--recursica_ui-kit_components_<contract>_*`):
+ * - Contract `text-field`. Axes: `layouts` (stacked, side-by-side) ← `formLayout`; `states` error ← `error`, disabled ← `disabled`.
  */
 export interface RecursicaTextFieldProps {
   /**

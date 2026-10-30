@@ -29,6 +29,9 @@ export interface RecursicaTreeNode {
  *
  * There used to be `expandOnClick`/`selectOnClick` toggles for the old combined click behavior;
  * they're gone now that expand and select are always independent.
+ *
+ * Forge mapping (names in `recursica_ui-kit.json` / `--recursica_ui-kit_components_<contract>_*`):
+ * - Contract `tree`. Axes: `selection-states` (unselected, selected) is derived from the selection, not a prop; `states` disabled ← `disabled`.
  */
 export interface RecursicaTreeProps {
   /** Hierarchical data used to render the tree */

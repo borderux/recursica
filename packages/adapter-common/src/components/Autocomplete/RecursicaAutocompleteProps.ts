@@ -3,6 +3,9 @@ import { type RecursicaComboboxData } from "../Combobox/RecursicaComboboxItem";
 
 /**
  * Props for the Recursica Autocomplete input component.
+ *
+ * Forge mapping (names in `recursica_ui-kit.json` / `--recursica_ui-kit_components_<contract>_*`):
+ * - Contract `autocomplete`. Axes: `layouts` (stacked, side-by-side) ← `formLayout`; `states` error ← `error`, disabled ← `disabled`.
  */
 export interface RecursicaAutocompleteProps {
   /** Data options to show in the dropdown */

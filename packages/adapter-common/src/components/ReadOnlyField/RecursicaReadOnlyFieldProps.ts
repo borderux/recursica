@@ -2,6 +2,9 @@ import { ReadOnlyFieldType } from "./ReadOnlyField";
 
 /**
  * Props for the Recursica ReadOnlyField component wrapper.
+ *
+ * Forge mapping (names in `recursica_ui-kit.json` / `--recursica_ui-kit_components_<contract>_*`):
+ * - Contract `read-only-field`. Axis `layouts` ← `formLayout`.
  */
 export interface RecursicaReadOnlyFieldProps {
   /** The specific value to be rendered in read-only mode */

@@ -2,6 +2,9 @@ import React from "react";
 
 /**
  * Props for the Recursica Slider component.
+ *
+ * Forge mapping (names in `recursica_ui-kit.json` / `--recursica_ui-kit_components_<contract>_*`):
+ * - Contract `slider`. Axes: `layouts` ← `formLayout`; `states` error ← `error`, disabled ← `disabled`; `active` is derived while the thumb is being dragged, not a prop.
  */
 export interface RecursicaSliderProps {
   /** Active error state indicator or text label */
