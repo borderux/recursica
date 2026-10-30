@@ -28,6 +28,14 @@
   padding: var(--recursica_brand_layer_0_properties_padding);
 }
 
+/* Layer root at 0 needs the border tokens too: .root sets border-style solid, so unset width/color fall back to medium/currentColor */
+.root[data-recursica-layer="0"] {
+  border-color: var(--recursica_brand_layer_0_properties_border-color);
+  border-width: var(--recursica_brand_layer_0_properties_border-size);
+  border-radius: var(--recursica_brand_layer_0_properties_border-radius);
+  box-shadow: var(--recursica_brand_layer_0_properties_elevation);
+}
+
 .root[data-recursica-layer="1"] {
   background-color: var(--recursica_brand_layer_1_properties_surface);
   color: var(--recursica_brand_layer_1_elements_text_color);
