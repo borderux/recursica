@@ -15,7 +15,7 @@ import { IS_DEV } from "../../utils/overStyledControl";
  * This is best-effort, not a guarantee. `cloneElement` can only override props the element
  * actually reads. A custom Link component (e.g. React Router's) that drives navigation from its
  * own internal handler rather than a passed-through `onClick` will keep navigating regardless.
- * The last crumb should really just be plain text — see BREADCRUMB_IMPLEMENTATION_NOTES.md.
+ * The last crumb should really just be plain text — see IMPLEMENTATION_NOTES.md.
  */
 export function markCurrentPageItem(children: ReactNode): ReactNode {
   const items = Children.toArray(children);

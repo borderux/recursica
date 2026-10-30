@@ -5,7 +5,7 @@ If you are an AI agent building components:
 1. You are forbidden from modifying the underlying UI library's source code or injecting system styles directly (no `style={{}}` for design tokens).
 2. All style overrides must be done via `{ComponentName}.module.css` scoped to `.root`.
 3. You must use native CSS variables derived from `recursica_variables_scoped.css`.
-4. You must document integration and usage details in a `USAGE.md` file, and internal technical layout hooks in a `{COMPONENT}_IMPLEMENTATION_NOTES.md` file.
+4. You must document integration and usage details in a `USAGE.md` file, and internal technical layout hooks in an `IMPLEMENTATION_NOTES.md` file.
 5. You are strictly FORBIDDEN from using CSS variable fallbacks (e.g. `var(--variable-name, fallback-value)`) in `module.css` files.
    </critical_agent_directive>
 
@@ -236,13 +236,13 @@ Add these only where the component has the native element for them to apply to:
 - **Required:**
   - `{ComponentName}.tsx` and `{ComponentName}.module.css` (No `.css.ts`, no separate plain `.css` for overrides).
   - `USAGE.md` (Documents how to integrate the component into project code, standard usage examples, and adapter-specific integration details. This is publicly consumable documentation for developers integrating the component).
-    - **Scope strictly to the consumer's perspective**: props, their behavior, and integration steps. Do not explain _why_ the component is built the way it is, its internal DOM structure, which internal helper components it composes, or any implementation rationale — that belongs exclusively in `{COMPONENT}_IMPLEMENTATION_NOTES.md`. A prop's _effect_ is in scope ("`withSeconds` adds a seconds segment"); the _mechanism behind_ a fixed, non-configurable behavior is not ("this is fixed because the underlying library bundles X unconditionally with Y").
-    - **Never reference `{COMPONENT}_IMPLEMENTATION_NOTES.md`** — by name, by link, or by any other pointer. It's an internal-only doc, never added to a package's `"files"` array (see `docs/DOCUMENTATION_STRATEGY.md` §3, root of the monorepo), so a link to it from `USAGE.md` is a dead link for every real consumer reading it from `node_modules` or npmjs.com — the same class of publish-boundary bug documented there for `README.md` → `PHILOSOPHY.md`, just one file over.
+    - **Scope strictly to the consumer's perspective**: props, their behavior, and integration steps. Do not explain _why_ the component is built the way it is, its internal DOM structure, which internal helper components it composes, or any implementation rationale — that belongs exclusively in `IMPLEMENTATION_NOTES.md`. A prop's _effect_ is in scope ("`withSeconds` adds a seconds segment"); the _mechanism behind_ a fixed, non-configurable behavior is not ("this is fixed because the underlying library bundles X unconditionally with Y").
+    - **Never reference `IMPLEMENTATION_NOTES.md`** — by name, by link, or by any other pointer. It's an internal-only doc, never added to a package's `"files"` array (see `docs/DOCUMENTATION_STRATEGY.md` §3, root of the monorepo), so a link to it from `USAGE.md` is a dead link for every real consumer reading it from `node_modules` or npmjs.com — the same class of publish-boundary bug documented there for `README.md` → `PHILOSOPHY.md`, just one file over.
 - **Optional:**
   - `index.ts` to re-export the component and props type.
   - An audit or doc file for documentation only.
 - **Implementation notes (Living Document - Internal Only):**
-  - You MUST systematically create an `{COMPONENT}_IMPLEMENTATION_NOTES.md` file (or `IMPLEMENTATION_NOTES.md`) in the component folder (e.g., `BUTTON_IMPLEMENTATION_NOTES.md`) when you build _any_ new component that requires custom logical layouts or CSS workarounds. This document is intended as internal notes on the implementation details (why specific layout hacks, accessibility tweaks, truncation hacks, or logic decisions were made) to structurally track why component logic diverges from standard library behavior. This is NOT publicly consumable or user-facing documentation. Keep this file updated as a living document.
+  - You MUST systematically create an `IMPLEMENTATION_NOTES.md` file in the component folder (e.g., `src/components/Button/IMPLEMENTATION_NOTES.md`), always with exactly that name and never with the component name in the filename, when you build _any_ new component that requires custom logical layouts or CSS workarounds. This document is intended as internal notes on the implementation details (why specific layout hacks, accessibility tweaks, truncation hacks, or logic decisions were made) to structurally track why component logic diverges from standard library behavior. This is NOT publicly consumable or user-facing documentation. Keep this file updated as a living document.
 
 ---
 
@@ -266,8 +266,8 @@ Add these only where the component has the native element for them to apply to:
 - [ ] No design tokens via props; no `useEffect`/state for token-driven styling (except one documented exception if needed).
 - [ ] displayName and JSDoc set; icon-only / unlabeled usage documented (e.g. aria-label).
 - [ ] Toolbar integration test and any required toolbar/sidebar config added.
-- [ ] Component usage, integration details, and standard import and React usage examples are documented in a public-facing `USAGE.md` file — consumer-facing prop behavior only, no internal architecture/rationale, and no reference to `{COMPONENT}_IMPLEMENTATION_NOTES.md`.
-- [ ] Component-specific decisions, edge-cases, and ongoing design-system layout fixes are meticulously documented in an internal living `{COMPONENT}_IMPLEMENTATION_NOTES.md` file (e.g. `BUTTON_IMPLEMENTATION_NOTES.md`) to structurally track _why_ the component logic diverges from standard library behavior.
+- [ ] Component usage, integration details, and standard import and React usage examples are documented in a public-facing `USAGE.md` file — consumer-facing prop behavior only, no internal architecture/rationale, and no reference to `IMPLEMENTATION_NOTES.md`.
+- [ ] Component-specific decisions, edge-cases, and ongoing design-system layout fixes are meticulously documented in an internal living `IMPLEMENTATION_NOTES.md` file (e.g. `Button/IMPLEMENTATION_NOTES.md`, never `BUTTON_IMPLEMENTATION_NOTES.md`) to structurally track _why_ the component logic diverges from standard library behavior.
 - [ ] Read your adapter's own `docs/COMPONENT_DEV_GUIDE.md` delta for anything library-specific (e.g. polymorphism mechanism, CSS specificity notes) not covered here.
 
 ---
