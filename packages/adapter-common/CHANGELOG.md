@@ -1,5 +1,16 @@
 # @recursica/adapter-common
 
+## 1.4.0
+
+### Minor Changes
+
+- 9bcddc9: Document the Forge contract and axis names in every component props file and in `RECURSICA_COMPONENTS`. Add `orientation` to the Stepper and Tabs props, and `RadioGroup` and `SwitchGroup` to `RECURSICA_COMPONENTS`.
+- 9b0b98b: `RecursicaThemeProvider`'s `initLayer0` now sets `data-recursica-layer="0"` on `<body>` and styles it directly instead of wrapping children in an extra `Layer` div. Layer 0 no longer applies border or elevation.
+
+### Patch Changes
+
+- 9bcddc9: Docs: the per-component notes file is always named `IMPLEMENTATION_NOTES.md`, never prefixed with the component name.
+
 ## 1.3.1
 
 ### Patch Changes
