@@ -177,8 +177,8 @@
           },
           "layer": {
             "type": "string",
-            "enum": ["brand", "tokens"],
-            "description": "Which restricted layer the variable belongs to. 'tokens' can never be exempted; 'brand' requires a recursica-allow-brand directive in the file's header."
+            "enum": ["brand", "tokens", "unstable"],
+            "description": "Which restricted layer the variable belongs to. 'tokens' can never be exempted; 'brand' requires a recursica-allow-brand directive in the file's header. 'unstable' is a variant/mode/theme/layer-specific ui-kit component name; read the stable `_properties_` name instead, or exempt with recursica-ignore."
           },
           "componentId": {
             "type": "string",
