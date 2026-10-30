@@ -78,7 +78,7 @@ than) the unused-variable warnings above:
 Violations are reported the same way as broken variables: printed to the console, written to
 `layerViolations` in the JSON report, and the process exits with status `1`.
 
-Raw `--recursica_brand_*`/`--recursica_tokens_*` variables are also excluded entirely from the
+With the stable-names check on (transform 1.8.0+), unstable `--recursica_ui-kit_components_*` names are likewise excluded, so only unused stable names are reported. Raw `--recursica_brand_*`/`--recursica_tokens_*` variables are also excluded entirely from the
 Unused Variables count below — components are architecturally never supposed to consume them
 directly, so they'd otherwise always read as "unused" regardless of how complete a component is.
 
