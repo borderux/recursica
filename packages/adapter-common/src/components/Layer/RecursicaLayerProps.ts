@@ -6,6 +6,9 @@ import React from "react";
  * generic brand vars (e.g. --recursica_brand_layer_N_properties_surface) to this element
  * and descendants. Theme is set on the document root (e.g. via RecursicaThemeProvider).
  * See recursica_variables_scoped.css header.
+ *
+ * Forge mapping (names in `recursica_ui-kit.json` / `--recursica_ui-kit_components_<contract>_*`):
+ * - Not a Forge component: intentionally outside the UI kit, so it has no `ui-kit_components_*` contract.
  */
 export interface RecursicaLayerProps {
   /** Layer (0–3). Sets data-recursica-layer on the root so descendants use this layer's styles. */

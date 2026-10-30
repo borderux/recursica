@@ -15,6 +15,9 @@ export interface RecursicaFileUploadItem {
 
 /**
  * Props for the Recursica FileUpload component.
+ *
+ * Forge mapping (names in `recursica_ui-kit.json` / `--recursica_ui-kit_components_<contract>_*`):
+ * - Contract `file-upload`. Axes: `layouts` (stacked, side-by-side) ← `formLayout`; `states` error ← `error`, disabled ← `disabled`.
  */
 export interface RecursicaFileUploadProps {
   /**

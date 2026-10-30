@@ -2,9 +2,16 @@ import React from "react";
 
 /**
  * Props for the Recursica Chip component.
+ *
+ * Forge mapping (names in `recursica_ui-kit.json` / `--recursica_ui-kit_components_<contract>_*`):
+ * - Contract `chip`. Axes: `selection-states` (unselected, selected) ← `checked`; `states` error ← `error`, disabled ← `disabled`.
  */
 export interface RecursicaChipProps {
-  /** Enables the error state styling */
+  /**
+   * Enables the error state styling
+   *
+   * Forge axis `states`: error.
+   */
   error?: boolean;
   /** Leading icon content */
   icon?: React.ReactNode;
@@ -12,7 +19,11 @@ export interface RecursicaChipProps {
   onDelete?: (e: React.MouseEvent<HTMLSpanElement, MouseEvent>) => void;
   /** Screen reader label for the delete button. Defaults to 'Delete' */
   deleteLabel?: string;
-  /** Checked state for the chip (acts as a checkbox) */
+  /**
+   * Checked state for the chip (acts as a checkbox)
+   *
+   * Forge axis `selection-states` (selected when true, unselected when false).
+   */
   checked?: boolean;
   /**
    * Tab index for the delete (X) icon. Defaults to `0`. Lets a parent implement a roving-tabindex

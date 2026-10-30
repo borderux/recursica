@@ -5,7 +5,7 @@ If you are an AI agent building components:
 1. You are forbidden from modifying the underlying UI library's source code or injecting system styles directly (no `style={{}}` for design tokens).
 2. All style overrides must be done via `{ComponentName}.module.css` scoped to `.root`.
 3. You must use native CSS variables derived from `recursica_variables_scoped.css`.
-4. You must document integration and usage details in a `USAGE.md` file, and internal technical layout hooks in a `{COMPONENT}_IMPLEMENTATION_NOTES.md` file.
+4. You must document integration and usage details in a `USAGE.md` file, and internal technical layout hooks in an `IMPLEMENTATION_NOTES.md` file.
 5. You are strictly FORBIDDEN from using CSS variable fallbacks (e.g. `var(--variable-name, fallback-value)`) in `module.css` files.
    </critical_agent_directive>
 
@@ -149,6 +149,15 @@ Two acceptable ways to make a specific prop fully un-settable by a caller (stron
 - **Caller `className` / `style`** – You may allow optional `className` and `style` to be passed through to the library root so callers can add overrides. Document that Recursica styling comes from the module and caller values are additive.
 - **Multi-library** – If the adapter supports multiple libraries, use library-specific prop bags (e.g. `<library>?: { ... }`) so callers can pass library-specific options. The implementation for each library reads its bag and merges into the props passed to that library.
 
+### 3.4.1 Forge name mapping lives in the props file
+
+Forge (the export from `recursica_ui-kit.json`) names components "contracts" and variants "axes" (`styles`, `sizes`, `layouts`, `types`, `orientation`, `selection-states`, `states`), which differ from Recursica's prop names (`variant`, `size`, `formLayout`, ...). Record the mapping in TSDoc in the component's `Recursica<Name>Props.ts`, not in a separate Markdown file, so it travels with the code:
+
+- The interface doc lists the Forge contract name, and for each Forge axis the prop it maps to (`styles` ← `variant`), plus any axis that is derived from state or children rather than a prop (say so).
+- Forge parts that are separate contracts here but children in Recursica (`*-item`, `*-group`, accordion and table parts) are named on the parent component.
+- Each prop that maps to an axis carries a `Forge axis ...` line; a prop with no Forge equivalent says `Not a Forge axis`.
+- A component with no Forge contract says so. `RECURSICA_COMPONENTS` in `src/types.ts` carries the Forge contract for every component.
+
 ### 3.5 Native attributes and accessibility passthrough
 
 §3.1 says to use standard HTML props as-is. This section says which ones, where they must land, and which ones the design system keeps for itself. The rules are kit-agnostic: every adapter implements the same policy, even though the mechanics differ (React spreads `...rest`; Angular has no spreading and declares each input, see that adapter's guide).
@@ -236,13 +245,13 @@ Add these only where the component has the native element for them to apply to:
 - **Required:**
   - `{ComponentName}.tsx` and `{ComponentName}.module.css` (No `.css.ts`, no separate plain `.css` for overrides).
   - `USAGE.md` (Documents how to integrate the component into project code, standard usage examples, and adapter-specific integration details. This is publicly consumable documentation for developers integrating the component).
-    - **Scope strictly to the consumer's perspective**: props, their behavior, and integration steps. Do not explain _why_ the component is built the way it is, its internal DOM structure, which internal helper components it composes, or any implementation rationale — that belongs exclusively in `{COMPONENT}_IMPLEMENTATION_NOTES.md`. A prop's _effect_ is in scope ("`withSeconds` adds a seconds segment"); the _mechanism behind_ a fixed, non-configurable behavior is not ("this is fixed because the underlying library bundles X unconditionally with Y").
-    - **Never reference `{COMPONENT}_IMPLEMENTATION_NOTES.md`** — by name, by link, or by any other pointer. It's an internal-only doc, never added to a package's `"files"` array (see `docs/DOCUMENTATION_STRATEGY.md` §3, root of the monorepo), so a link to it from `USAGE.md` is a dead link for every real consumer reading it from `node_modules` or npmjs.com — the same class of publish-boundary bug documented there for `README.md` → `PHILOSOPHY.md`, just one file over.
+    - **Scope strictly to the consumer's perspective**: props, their behavior, and integration steps. Do not explain _why_ the component is built the way it is, its internal DOM structure, which internal helper components it composes, or any implementation rationale — that belongs exclusively in `IMPLEMENTATION_NOTES.md`. A prop's _effect_ is in scope ("`withSeconds` adds a seconds segment"); the _mechanism behind_ a fixed, non-configurable behavior is not ("this is fixed because the underlying library bundles X unconditionally with Y").
+    - **Never reference `IMPLEMENTATION_NOTES.md`** — by name, by link, or by any other pointer. It's an internal-only doc, never added to a package's `"files"` array (see `docs/DOCUMENTATION_STRATEGY.md` §3, root of the monorepo), so a link to it from `USAGE.md` is a dead link for every real consumer reading it from `node_modules` or npmjs.com — the same class of publish-boundary bug documented there for `README.md` → `PHILOSOPHY.md`, just one file over.
 - **Optional:**
   - `index.ts` to re-export the component and props type.
   - An audit or doc file for documentation only.
 - **Implementation notes (Living Document - Internal Only):**
-  - You MUST systematically create an `{COMPONENT}_IMPLEMENTATION_NOTES.md` file (or `IMPLEMENTATION_NOTES.md`) in the component folder (e.g., `BUTTON_IMPLEMENTATION_NOTES.md`) when you build _any_ new component that requires custom logical layouts or CSS workarounds. This document is intended as internal notes on the implementation details (why specific layout hacks, accessibility tweaks, truncation hacks, or logic decisions were made) to structurally track why component logic diverges from standard library behavior. This is NOT publicly consumable or user-facing documentation. Keep this file updated as a living document.
+  - You MUST systematically create an `IMPLEMENTATION_NOTES.md` file in the component folder (e.g., `src/components/Button/IMPLEMENTATION_NOTES.md`), always with exactly that name and never with the component name in the filename, when you build _any_ new component that requires custom logical layouts or CSS workarounds. This document is intended as internal notes on the implementation details (why specific layout hacks, accessibility tweaks, truncation hacks, or logic decisions were made) to structurally track why component logic diverges from standard library behavior. This is NOT publicly consumable or user-facing documentation. Keep this file updated as a living document.
 
 ---
 
@@ -266,8 +275,9 @@ Add these only where the component has the native element for them to apply to:
 - [ ] No design tokens via props; no `useEffect`/state for token-driven styling (except one documented exception if needed).
 - [ ] displayName and JSDoc set; icon-only / unlabeled usage documented (e.g. aria-label).
 - [ ] Toolbar integration test and any required toolbar/sidebar config added.
-- [ ] Component usage, integration details, and standard import and React usage examples are documented in a public-facing `USAGE.md` file — consumer-facing prop behavior only, no internal architecture/rationale, and no reference to `{COMPONENT}_IMPLEMENTATION_NOTES.md`.
-- [ ] Component-specific decisions, edge-cases, and ongoing design-system layout fixes are meticulously documented in an internal living `{COMPONENT}_IMPLEMENTATION_NOTES.md` file (e.g. `BUTTON_IMPLEMENTATION_NOTES.md`) to structurally track _why_ the component logic diverges from standard library behavior.
+- [ ] Component usage, integration details, and standard import and React usage examples are documented in a public-facing `USAGE.md` file — consumer-facing prop behavior only, no internal architecture/rationale, and no reference to `IMPLEMENTATION_NOTES.md`.
+- [ ] The Forge contract and axis-to-prop mapping is documented in the component's `Recursica<Name>Props.ts` TSDoc (see 3.4.1).
+- [ ] Component-specific decisions, edge-cases, and ongoing design-system layout fixes are meticulously documented in an internal living `IMPLEMENTATION_NOTES.md` file (e.g. `Button/IMPLEMENTATION_NOTES.md`, never `BUTTON_IMPLEMENTATION_NOTES.md`) to structurally track _why_ the component logic diverges from standard library behavior.
 - [ ] Read your adapter's own `docs/COMPONENT_DEV_GUIDE.md` delta for anything library-specific (e.g. polymorphism mechanism, CSS specificity notes) not covered here.
 
 ---

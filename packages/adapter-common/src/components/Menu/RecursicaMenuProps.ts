@@ -2,6 +2,9 @@ import React from "react";
 
 /**
  * Props for the Recursica Menu component.
+ *
+ * Forge mapping (names in `recursica_ui-kit.json` / `--recursica_ui-kit_components_<contract>_*`):
+ * - Contract `menu`. Forge's `menu-item` is each Menu.Item (child of the Menu): `selection-states` (unselected, selected) and `states` disabled.
  */
 export interface RecursicaMenuProps {
   /**

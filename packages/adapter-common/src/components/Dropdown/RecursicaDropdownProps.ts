@@ -3,6 +3,9 @@ import { type RecursicaComboboxData } from "../Combobox/RecursicaComboboxItem";
 
 /**
  * Props for the Recursica Dropdown/Select component.
+ *
+ * Forge mapping (names in `recursica_ui-kit.json` / `--recursica_ui-kit_components_<contract>_*`):
+ * - Contract `dropdown`. Axes: `layouts` (stacked, side-by-side) ← `formLayout`; `states` error ← `error`, disabled ← `disabled`.
  */
 export interface RecursicaDropdownProps {
   /** Internal hook for Selects to override raw layout width properties */

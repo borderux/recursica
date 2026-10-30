@@ -2,6 +2,10 @@ import React from "react";
 
 /**
  * Props for the Recursica Checkbox component.
+ *
+ * Forge mapping (names in `recursica_ui-kit.json` / `--recursica_ui-kit_components_<contract>_*`):
+ * - Contract `checkbox`. Axes: `selection-states` (checked, unchecked, indeterminate) is derived from the control's checked/indeterminate state, not a prop; `states` disabled ← `disabled`.
+ * - Forge's `checkbox-item` contract is this Checkbox when it is rendered inside a CheckboxGroup (Mantine-style grouped structure: the item is a child of the group, not a separate component).
  */
 export interface RecursicaCheckboxProps {
   /** Visual label of the checkbox */
@@ -14,6 +18,9 @@ export interface RecursicaCheckboxProps {
 
 /**
  * Props for the Recursica CheckboxGroup component.
+ *
+ * Forge mapping (names in `recursica_ui-kit.json` / `--recursica_ui-kit_components_<contract>_*`):
+ * - Contract `checkbox-group`. Axis `layouts` (stacked, side-by-side) ← `formLayout` (see `RecursicaFormControlLayoutProps`). Each Checkbox child maps to Forge's `checkbox-item`.
  */
 export interface RecursicaCheckboxGroupProps {
   /** Selected values in controlled mode */

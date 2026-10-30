@@ -50,7 +50,7 @@ The canonical/delta split with a single source of truth is only for **contributo
 1. If the component needs a new shared prop-contract type, add `Recursica<Name>Props.ts` under `packages/adapter-common/src/components/<Name>/` in this monorepo.
 2. Implement the component in **every** adapter repo it targets (see the standing rule in the root `AGENT.md`), following that adapter's `docs/COMPONENT_DEV_GUIDE.md` delta plus the canonical guide it links to.
 3. Add a story per [`docs/COMPONENT_STORYBOOK_GUIDE.md`](./COMPONENT_STORYBOOK_GUIDE.md) (canonical) and your adapter's delta, using the shared decorators/config from `storybook-template` (already wired into each adapter's `.storybook/` directory).
-4. Add the component's `USAGE.md` (and `{COMPONENT}_IMPLEMENTATION_NOTES.md` if it required layout workarounds) inside that adapter's component folder, and update that adapter's `llms.txt`.
+4. Add the component's `USAGE.md` (and `IMPLEMENTATION_NOTES.md` if it required layout workarounds) inside that adapter's component folder, and update that adapter's `llms.txt`.
 5. If you built the component on the source-of-truth adapter, capture golden images there (`--update-golden`) and publish a release so other adapters' `adapter-tester` divergence checks have something to diff against.
 
 ## Making a change across adapters (the fan-out process)

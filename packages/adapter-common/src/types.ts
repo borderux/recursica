@@ -161,9 +161,13 @@ export type RecursicaOverStyled<T, Allow extends BlockedStylingKeys = never> =
  * Base properties for Recursica label indicators.
  */
 export interface RecursicaLabelProps {
-  /** Specifies the sizing metrics natively mapping the Label boundaries. Only `default`/`small`
+  /**
+   * Forge: axis `sizes` of the `label` contract (default, small).
+   *
+   * Specifies the sizing metrics natively mapping the Label boundaries. Only `default`/`small`
    * are defined by Recursica's Label tokens — `md` was never a real design size (no adapter had
-   * a width rule for it) and has been removed; see docs/OPEN_DECISIONS.md #41 in beam-adapter. */
+   * a width rule for it) and has been removed; see docs/OPEN_DECISIONS.md #41 in beam-adapter.
+   */
   labelSize?: "default" | "small";
   /**
    * Overall alignment directive for the label strings natively forcing Left/Right justification.
@@ -190,7 +194,12 @@ export interface RecursicaLabelProps {
  * Base properties required by any input control supporting native form wrapper layouts.
  */
 export interface RecursicaFormControlWrapperProps extends RecursicaLabelProps {
-  /** Overall structural flow mapping the Form Control natively cascading down to Label and Input logic. */
+  /**
+   * Forge: axis `layouts` (stacked, side-by-side), present on `label`, `read-only-field`, every form-control
+   * contract and the `*-group` contracts.
+   *
+   * Overall structural flow mapping the Form Control natively cascading down to Label and Input logic.
+   */
   formLayout?: "stacked" | "side-by-side";
   /**
    * Securely replaces standard descriptions safely providing standard Assistive properties.
@@ -215,61 +224,124 @@ export interface RecursicaFormControlWrapperProps extends RecursicaLabelProps {
 
 /**
  * Official list of all components in Recursica.
+ *
+ * Each entry notes the Forge contract (`recursica_ui-kit.json`, `--recursica_ui-kit_components_<contract>_*`) it maps to.
+ * Forge lists some parts as separate components (`*-item`, `*-group`, accordion and table parts); Recursica follows
+ * Mantine's grouped structure and keeps them as children of one component. Names that differ: Radio is Forge's
+ * `radio-button`; HoverCard and Popover share Forge's single `hover-card-popover`.
  */
 export const RECURSICA_COMPONENTS = [
+  // Forge: `accordion`; parts `accordion-item`, `accordion-header`, `accordion-content` are children (Item, Control, Panel).
   "Accordion",
+  // Forge: `assistive-element`.
   "AssistiveElement",
+  // Forge: `autocomplete`.
   "Autocomplete",
+  // Forge: `avatar`.
   "Avatar",
+  // Forge: `badge`.
   "Badge",
+  // Not in Forge (layout primitive, intentionally outside the UI kit).
   "Box",
+  // Forge: `breadcrumb`.
   "Breadcrumb",
+  // Forge: `button`.
   "Button",
+  // Forge: `card`.
   "Card",
+  // Forge: `checkbox`; `checkbox-item` is a Checkbox inside a CheckboxGroup.
   "Checkbox",
+  // Forge: `checkbox-group`.
   "CheckboxGroup",
+  // Forge: `chip`.
   "Chip",
+  // Not in Forge (layout primitive, intentionally outside the UI kit).
   "Container",
+  // Forge: `date-picker`.
   "DatePicker",
+  // Forge: `dropdown`.
   "Dropdown",
+  // Not in Forge (helper, intentionally outside the UI kit).
   "EmptyValueRenderer",
+  // Forge: `file-input`.
   "FileInput",
+  // Forge: `file-upload`.
   "FileUpload",
+  // Not in Forge (layout primitive, intentionally outside the UI kit).
   "Flex",
+  // Not in Forge (structural helper; carries Forge's `layouts` axis as `formLayout`).
   "FormControlLayout",
+  // Not in Forge (structural helper).
   "FormControlWrapper",
+  // Not in Forge (layout primitive, intentionally outside the UI kit).
   "Group",
+  // Not in Forge (typography, intentionally outside the UI kit components).
   "Heading",
+  // Forge: `hover-card-popover` (one Forge contract shared with Popover).
   "HoverCard",
+  // Forge: `label`.
   "Label",
+  // Not in Forge (helper, intentionally outside the UI kit).
   "Layer",
+  // Not in Forge (layout primitive, intentionally outside the UI kit).
   "LayoutGrid",
+  // Forge: `link`.
   "Link",
+  // Forge: `loader`.
   "Loader",
+  // Forge: `menu`; `menu-item` is each Menu.Item.
   "Menu",
+  // Forge: `modal`.
   "Modal",
+  // Forge: `number-input`.
   "NumberInput",
+  // Forge: `pagination`.
   "Pagination",
+  // Forge: `panel`.
   "Panel",
+  // Forge: `hover-card-popover` (one Forge contract shared with HoverCard).
   "Popover",
+  // Forge: `radio-button` (kept as Radio); `radio-button-item` is a Radio inside a RadioGroup.
   "Radio",
+  // Forge: `radio-button-group`.
+  "RadioGroup",
+  // Forge: `read-only-field`.
   "ReadOnlyField",
+  // Forge: `segmented-control`; `segmented-control-item` is each `data` entry.
   "SegmentedControl",
+  // Forge: `slider`.
   "Slider",
+  // Not in Forge (layout primitive, intentionally outside the UI kit).
   "Stack",
+  // Forge: `stepper`.
   "Stepper",
+  // Forge: `switch`; `switch-item` is a Switch inside a SwitchGroup.
   "Switch",
+  // Forge: `switch-group`.
+  "SwitchGroup",
+  // Forge: `table`; `table-cell`, `table-header`, `table-footer` are Table children (Td, Th, Tfoot).
   "Table",
+  // Forge: `tabs`; `tabs-item` is each Tab.
   "Tabs",
+  // Not in Forge (typography, intentionally outside the UI kit components).
   "Text",
+  // Forge: `textarea`.
   "TextArea",
+  // Forge: `text-field`.
   "TextField",
+  // Forge: `time-picker`.
   "TimePicker",
+  // Forge: `timeline`; `timeline-bullet` is each item's bullet.
   "Timeline",
+  // Forge: `toast`.
   "Toast",
+  // Forge: `tooltip`.
   "Tooltip",
+  // Forge: `transfer-list`.
   "TransferList",
+  // Forge: `tree`.
   "Tree",
+  // Not in Forge (typography, intentionally outside the UI kit components).
   "Typography",
 ] as const;
 

@@ -10,6 +10,9 @@ export type { RecursicaFileUploadItem as RecursicaFileInputItem };
  * `FileUpload`'s dropzone, but shares the same file-selection interface and validation
  * behavior (`accept`/`maxSize`/`maxFiles`, `onFilesRejected`, `readOnly`) so integrators can
  * move between them without relearning the contract.
+ *
+ * Forge mapping (names in `recursica_ui-kit.json` / `--recursica_ui-kit_components_<contract>_*`):
+ * - Contract `file-input`. Axes: `layouts` (stacked, side-by-side) ← `formLayout`; `states` error ← `error`, disabled ← `disabled`.
  */
 export interface RecursicaFileInputProps {
   /**

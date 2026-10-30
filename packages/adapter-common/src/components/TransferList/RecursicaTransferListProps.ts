@@ -18,6 +18,9 @@ export type RecursicaTransferListData = [
 
 /**
  * Props for the Recursica TransferList component.
+ *
+ * Forge mapping (names in `recursica_ui-kit.json` / `--recursica_ui-kit_components_<contract>_*`):
+ * - Contract `transfer-list`. Axes: `layouts` ← `formLayout`; `states` error ← `error`, disabled ← `disabled`.
  */
 export interface RecursicaTransferListProps {
   /** Controlled data: [sourceItems, targetItems] */

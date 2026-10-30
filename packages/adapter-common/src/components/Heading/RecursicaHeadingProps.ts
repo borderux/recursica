@@ -3,6 +3,9 @@ import type { TextColor, TextEmphasis } from "../Text/RecursicaTextProps";
 
 /**
  * Props for the Recursica Heading component.
+ *
+ * Forge mapping (names in `recursica_ui-kit.json` / `--recursica_ui-kit_components_<contract>_*`):
+ * - Not a Forge component: intentionally outside the UI kit, so it has no `ui-kit_components_*` contract.
  */
 export interface RecursicaHeadingProps
   extends React.HTMLAttributes<HTMLHeadingElement> {

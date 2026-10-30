@@ -3,6 +3,8 @@ import React from "react";
 /**
  * Props for the Recursica LayoutGrid.Col layout component.
  *
+ * Not a Forge component: intentionally outside the UI kit, so it has no `ui-kit_components_*` contract.
+ *
  * TODO(grid-col-contract): `span`, `order`, `visibleFrom`, and `hiddenFrom` are all drafted below,
  * commented out, and NOT part of this contract yet (2026-09-22, Matt — paused to get the Grid
  * work merged rather than resolve every open question first). Come back to this:
