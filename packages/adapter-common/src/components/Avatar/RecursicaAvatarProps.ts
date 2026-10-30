@@ -20,7 +20,7 @@ export interface RecursicaAvatarProps {
    *
    * Forge axis `types` (solid, outline, ghost). Not Forge's `styles`.
    */
-  variant?: "solid" | "outline" | "ghost";
+  variant?: "solid" | "outline" | "ghost" | (string & {});
   /** Icon element fallback when initials or src aren't shown */
   icon?: React.ReactNode;
 }

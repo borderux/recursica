@@ -12,7 +12,7 @@ export interface RecursicaTabsProps {
    *
    * Forge axis `styles`.
    */
-  variant?: "default" | "outline" | "pills";
+  variant?: "default" | "outline" | "pills" | (string & {});
   /**
    * Whether the tabs are inverted (tabs list at the bottom/right instead of top/left)
    *

@@ -14,7 +14,7 @@ export interface RecursicaAssistiveElementProps {
    *
    * Forge axis `types` (help, error).
    */
-  assistiveVariant?: "help" | "error";
+  assistiveVariant?: "help" | "error" | (string & {});
   /** Explicitly toggle the rendering of the variant-specific SVG icon. There is no slot for a
    * custom icon — the icon is always the fixed one belonging to the current `assistiveVariant`. */
   assistiveWithIcon?: boolean;

@@ -46,7 +46,7 @@ export interface RecursicaTableHeaderCellProps {
    *
    * Not a Forge axis.
    */
-  variant?: "default" | "currency";
+  variant?: "default" | "currency" | (string & {});
 }
 
 /**
@@ -69,5 +69,5 @@ export interface RecursicaTableCellProps {
    *
    * Not a Forge axis.
    */
-  variant?: "default" | "currency";
+  variant?: "default" | "currency" | (string & {});
 }
