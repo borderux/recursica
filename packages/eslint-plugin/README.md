@@ -33,7 +33,16 @@ export default [
 
 The rule inspects JSX, so the files it runs on must be parsed with a JSX-capable parser (as above, or your project's existing TypeScript/React ESLint setup).
 
-The plugin only supports flat config. `recursica.configs.recommended` is exported but is not valid flat config yet, so enable rules explicitly as shown.
+Or use the recommended flat config, which registers the plugin as `recursica` and enables its rules:
+
+```js
+export default [
+  // ...parser setup as above
+  { files: ["**/*.{jsx,tsx}"], ...recursica.configs.recommended },
+];
+```
+
+The plugin only supports flat config, and works with ESLint 8.57+, 9 and 10.
 
 ## Rules
 
