@@ -1,5 +1,11 @@
 # eslint-plugin-recursica
 
+## 0.3.0
+
+### Minor Changes
+
+- ea5e94e: Supports ESLint 10, and `configs.recommended` is now valid flat config that can be spread into `eslint.config.js`.
+
 ## 0.2.2
 
 ### Patch Changes
