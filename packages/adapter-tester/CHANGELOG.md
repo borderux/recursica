@@ -1,5 +1,11 @@
 # @recursica/adapter-tester
 
+## 5.4.1
+
+### Patch Changes
+
+- 60abb4c: Detects Storybook's URL when it reports `127.0.0.1` instead of `localhost` (Storybook 10.6+), which previously timed out after 120 seconds.
+
 ## 5.4.0
 
 ### Minor Changes
