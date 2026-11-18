@@ -40,9 +40,10 @@ export interface DiscoveredServer {
 // Storybook prints its bound address in its startup banner wrapped in ANSI
 // color codes and box-drawing chars, e.g.:
 //   │ │   - Local:                http://localhost:57496/                │ │
+// Storybook 10.6+ prints `http://127.0.0.1:<port>/` instead, so accept any host.
 // Strip ANSI first, then match the URL itself.
 const ANSI_PATTERN = /\x1b\[[0-9;]*m/g;
-const LOCAL_URL_PATTERN = /Local:\s*(https?:\/\/localhost:\d+)/;
+const LOCAL_URL_PATTERN = /Local:\s*(https?:\/\/[^\s/:]+:\d+)/;
 
 function isPortActive(port: number): Promise<boolean> {
   return new Promise((resolve) => {
@@ -98,7 +99,7 @@ function spawnAndDetect(
       child.kill();
       reject(
         new Error(
-          `Timed out after ${timeoutMs}ms waiting for ${target.name}'s Storybook to report its URL (no "Local: http://localhost:<port>" line seen in its output).`,
+          `Timed out after ${timeoutMs}ms waiting for ${target.name}'s Storybook to report its URL (no "Local: http://<host>:<port>" line seen in its output).`,
         ),
       );
     }, timeoutMs);
@@ -175,7 +176,8 @@ export async function launchAndDetectStorybook(
         `[Dev Launcher] ${target.name} is already running on port ${cachedPort} (reused).`,
       );
       return {
-        url: `http://localhost:${cachedPort}`,
+        // Same address isPortActive just confirmed is listening.
+        url: `http://127.0.0.1:${cachedPort}`,
         port: cachedPort,
         process: null,
       };
