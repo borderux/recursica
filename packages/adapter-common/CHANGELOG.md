@@ -1,5 +1,11 @@
 # @recursica/adapter-common
 
+## 1.6.0
+
+### Minor Changes
+
+- 8672af9: `RecursicaSegmentedControlProps` adds `hideLabels` for icon-only segments, and `data[].label` is now a required `string`, the item's accessible name. Labels passed as JSX no longer type-check.
+
 ## 1.5.0
 
 ### Minor Changes
