@@ -22,11 +22,21 @@ export interface RecursicaSegmentedControlProps {
   fullWidth?: boolean;
   /** Disables every item in the control at once; a single item can still be disabled via `data` */
   disabled?: boolean;
+  /**
+   * Show only each item's icon. The item's `label` is still its accessible name and is shown
+   * as a tooltip on hover and keyboard focus. Every object item must then have an `icon`;
+   * adapters throw if one does not.
+   */
+  hideLabels?: boolean;
   /** Data configuration options array */
   data?: Array<
     | string
     | {
-        label: React.ReactNode;
+        /**
+         * Non-empty text. Always the item's accessible name, whether shown or hidden by
+         * `hideLabels`, so visible text, screen-reader name and tooltip cannot drift apart.
+         */
+        label: string;
         value: string;
         disabled?: boolean;
         /** Optional leading icon rendered alongside the item's label */
